@@ -1,0 +1,1585 @@
+<!DOCTYPE html>
+<html lang="sv">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<title>STHLM SIGNAL — Blåtimmen</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --sky:#0a1a36; --panel:rgba(10,17,34,.78); --panel2:rgba(14,23,44,.92);
+  --line:rgba(210,225,255,.12); --text:#eef3fb; --dim:#9fb0cc;
+  --brass:#d9aa63; --blue:#7fa8e0; --danger:#e07a7a;
+  --r:18px;
+}
+*{box-sizing:border-box; -webkit-tap-highlight-color:transparent;}
+html,body{margin:0;height:100%;overflow:hidden;background:var(--sky);color:var(--text);
+  font-family:Inter,system-ui,sans-serif;font-size:15px;}
+#scene{position:fixed;inset:0;display:block;touch-action:none;}
+h1,h2,h3,.disp{font-family:'Space Grotesk',Inter,sans-serif;letter-spacing:.04em;}
+button{font-family:inherit;cursor:pointer;border:none;border-radius:12px;color:var(--text);
+  background:rgba(255,255,255,.08);padding:10px 16px;font-size:14px;font-weight:500;
+  transition:background .15s, transform .1s;}
+button:hover{background:rgba(255,255,255,.15);}
+button:active{transform:scale(.97);}
+button:focus-visible{outline:2px solid var(--brass);outline-offset:2px;}
+button.primary{background:var(--brass);color:#1a1206;font-weight:600;}
+button.primary:hover{background:#e8bd7c;}
+button.ghost{background:transparent;border:1px solid var(--line);}
+input[type=text],input[type=email]{background:rgba(255,255,255,.06);border:1px solid var(--line);
+  border-radius:12px;color:var(--text);padding:11px 14px;font-size:15px;width:100%;font-family:inherit;}
+input:focus{outline:2px solid var(--brass);outline-offset:1px;border-color:transparent;}
+.overlay{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;z-index:40;
+  padding:18px;background:rgba(4,9,20,.45);backdrop-filter:blur(6px);}
+.card{background:var(--panel2);border:1px solid var(--line);border-radius:var(--r);
+  padding:26px 26px 22px;max-width:460px;width:100%;max-height:88vh;overflow-y:auto;
+  box-shadow:0 24px 80px rgba(0,0,0,.5);}
+.card h2{margin:0 0 4px;font-size:21px;font-weight:700;}
+.card .sub{color:var(--dim);font-size:13.5px;margin:0 0 18px;line-height:1.5;}
+.eyebrow{font-family:'Space Grotesk';font-size:11px;letter-spacing:.22em;text-transform:uppercase;
+  color:var(--brass);margin-bottom:8px;}
+.row{display:flex;gap:10px;flex-wrap:wrap;}
+.grow{flex:1;}
+.chips{display:flex;flex-wrap:wrap;gap:8px;margin:10px 0 4px;}
+.chip{border:1px solid var(--line);border-radius:999px;padding:8px 14px;font-size:13.5px;
+  background:rgba(255,255,255,.04);display:flex;align-items:center;gap:7px;}
+.chip svg{flex:none;}
+.chip.on{border-color:var(--chipc,var(--brass));background:color-mix(in srgb,var(--chipc,var(--brass)) 18%, transparent);}
+.chip.sig.on{box-shadow:0 0 0 1px var(--chipc);}
+.styleCards{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin:12px 0;}
+.styleCard{border:1px solid var(--line);border-radius:14px;padding:12px 8px 10px;background:rgba(255,255,255,.03);
+  display:flex;flex-direction:column;align-items:center;gap:8px;font-size:12.5px;color:var(--dim);}
+.styleCard.on{border-color:var(--brass);background:rgba(217,170,99,.1);color:var(--text);}
+.styleCard canvas{border-radius:10px;}
+.swatches{display:flex;gap:8px;flex-wrap:wrap;margin:8px 0 14px;}
+.sw{width:30px;height:30px;border-radius:50%;border:2px solid transparent;padding:0;}
+.sw.on{border-color:#fff;box-shadow:0 0 0 2px rgba(255,255,255,.3);}
+label.f{display:block;font-size:12.5px;color:var(--dim);margin:14px 0 6px;letter-spacing:.03em;}
+/* HUD */
+#hud{position:fixed;inset:0;pointer-events:none;z-index:20;}
+#hud .hbtn{pointer-events:auto;width:44px;height:44px;border-radius:14px;display:flex;
+  align-items:center;justify-content:center;background:var(--panel);border:1px solid var(--line);
+  backdrop-filter:blur(8px);padding:0;}
+#hudTop{position:absolute;top:calc(12px + env(safe-area-inset-top));right:12px;display:flex;gap:8px;}
+#logoTag{position:absolute;top:calc(14px + env(safe-area-inset-top));left:16px;
+  font-family:'Space Grotesk';font-size:13px;letter-spacing:.28em;color:rgba(238,243,251,.85);
+  text-shadow:0 2px 12px rgba(0,0,0,.6);user-select:none;}
+#logoTag b{color:var(--brass);}
+#sigNow{position:absolute;top:calc(58px + env(safe-area-inset-top));left:16px;display:flex;align-items:center;gap:8px;
+  background:var(--panel);border:1px solid var(--line);border-radius:999px;padding:6px 14px 6px 8px;
+  font-size:12.5px;pointer-events:auto;backdrop-filter:blur(8px);cursor:pointer;color:var(--text);}
+#prompt{position:absolute;left:50%;bottom:calc(120px + env(safe-area-inset-bottom));transform:translateX(-50%);
+  display:none;flex-direction:column;align-items:center;gap:10px;pointer-events:auto;}
+#prompt .ptitle{background:var(--panel);border:1px solid var(--line);border-radius:999px;
+  padding:8px 18px;font-size:13.5px;backdrop-filter:blur(8px);text-align:center;}
+#prompt .pbtns{display:flex;gap:8px;}
+#prompt button{backdrop-filter:blur(8px);background:var(--panel);border:1px solid var(--line);}
+#prompt button.primary{background:var(--brass);border-color:transparent;}
+#toast{position:absolute;left:50%;top:calc(70px + env(safe-area-inset-top));transform:translateX(-50%);
+  background:var(--panel2);border:1px solid var(--line);border-radius:14px;padding:11px 20px;
+  font-size:13.5px;opacity:0;transition:opacity .3s;max-width:86vw;text-align:center;line-height:1.45;}
+#fade{position:fixed;inset:0;background:#04070f;z-index:60;opacity:1;transition:opacity 1.1s ease;pointer-events:none;}
+#vig{position:fixed;inset:0;pointer-events:none;z-index:5;
+  background:radial-gradient(ellipse at center,transparent 55%,rgba(3,7,16,.55) 100%);}
+/* intro */
+#intro{position:fixed;inset:0;z-index:50;display:flex;flex-direction:column;align-items:center;
+  justify-content:flex-end;padding-bottom:12vh;pointer-events:none;}
+#intro .title{font-family:'Space Grotesk';font-weight:700;font-size:clamp(34px,7vw,64px);
+  letter-spacing:.3em;text-indent:.3em;color:#fff;text-shadow:0 4px 40px rgba(10,26,54,.9);
+  opacity:0;transition:opacity 2s;}
+#intro .sub2{font-size:clamp(13px,2vw,15px);letter-spacing:.42em;text-indent:.42em;color:var(--brass);
+  margin-top:10px;opacity:0;transition:opacity 2s .6s;font-family:'Space Grotesk';}
+#skipBtn{pointer-events:auto;margin-top:34px;opacity:0;transition:opacity 1s 1.5s;
+  background:rgba(10,17,34,.6);border:1px solid var(--line);backdrop-filter:blur(6px);}
+#intro.show .title,#intro.show .sub2,#intro.show #skipBtn{opacity:1;}
+/* touch controls */
+#joyZone{position:fixed;left:0;bottom:0;width:46vw;height:44vh;z-index:15;display:none;touch-action:none;}
+#joyBase{position:absolute;width:110px;height:110px;border-radius:50%;border:1.5px solid rgba(255,255,255,.25);
+  background:rgba(255,255,255,.05);display:none;}
+#joyKnob{position:absolute;width:48px;height:48px;border-radius:50%;background:rgba(255,255,255,.35);display:none;}
+#lookZone{position:fixed;right:0;bottom:0;width:54vw;height:60vh;z-index:14;display:none;touch-action:none;}
+/* profile card */
+.pcHead{display:flex;gap:14px;align-items:center;margin-bottom:14px;}
+.pcHead img,.pcHead canvas{width:64px;height:64px;border-radius:18px;}
+.badgeDemo{font-size:10.5px;letter-spacing:.14em;background:rgba(127,168,224,.18);color:var(--blue);
+  border:1px solid rgba(127,168,224,.4);border-radius:6px;padding:2px 7px;margin-left:8px;vertical-align:2px;}
+.shared{background:rgba(217,170,99,.14);border:1px solid rgba(217,170,99,.45);border-radius:12px;
+  padding:10px 14px;font-size:13.5px;margin:12px 0;display:flex;gap:8px;align-items:center;}
+.sigline{display:flex;align-items:center;gap:9px;font-size:13.5px;color:var(--dim);margin:4px 0 8px;}
+hr.s{border:none;border-top:1px solid var(--line);margin:16px 0;}
+.helpk{display:grid;grid-template-columns:auto 1fr;gap:8px 16px;font-size:13.5px;margin-top:12px;}
+.helpk b{font-family:'Space Grotesk';background:rgba(255,255,255,.08);border-radius:7px;
+  padding:2px 9px;font-weight:500;text-align:center;font-size:12px;}
+.artvisual{width:100%;height:120px;border-radius:12px;margin:10px 0;}
+@media (max-width:600px){ .card{padding:20px 18px 16px;} }
+</style>
+</head>
+<body>
+<canvas id="scene"></canvas>
+<div id="vig"></div>
+
+<div id="hud">
+  <div id="logoTag">STHLM <b>SIGNAL</b></div>
+  <button id="sigNow" title="Byt aktiv signal"></button>
+  <div id="hudTop">
+    <button class="hbtn" id="btnHelp" title="Hjälp (H)" aria-label="Hjälp">?</button>
+    <button class="hbtn" id="btnMute" title="Ljud av/på (M)" aria-label="Ljud">♪</button>
+    <button class="hbtn" id="btnReset" title="Återställ position (R)" aria-label="Återställ">⟲</button>
+    <button class="hbtn" id="btnExit" title="Till gatan" style="display:none" aria-label="Till gatan">⤴</button>
+  </div>
+  <div id="prompt">
+    <div class="ptitle" id="promptTitle"></div>
+    <div class="pbtns" id="promptBtns"></div>
+  </div>
+  <div id="toast"></div>
+</div>
+
+<div id="joyZone"><div id="joyBase"></div><div id="joyKnob"></div></div>
+<div id="lookZone"></div>
+
+<div id="intro">
+  <div class="title">STHLM SIGNAL</div>
+  <div class="sub2">BLÅTIMMEN · KAPITEL ETT</div>
+  <button id="skipBtn">Hoppa över</button>
+</div>
+
+<div id="uiRoot"></div>
+<div id="fade"></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script>
+"use strict";
+/* ============================================================
+   STHLM SIGNAL — Blåtimmen. Kapitel ett.
+   En spelbar vertikal skiva av Stockholm:
+   Norrmalmstorg → Biblioteksgatan → Stureplan → Sturegallerian.
+   ============================================================ */
+
+/* ---------- DATA ---------- */
+const SIGNALS = [
+  {id:'golf',  label:'Golf',                color:'#4f8fe8', icon:'flag'},
+  {id:'food',  label:'Mat & matlagning',    color:'#5fb96a', icon:'fork'},
+  {id:'sport', label:'Sport',               color:'#e05a5a', icon:'bolt'},
+  {id:'art',   label:'Konst & design',      color:'#a06ae0', icon:'palette'},
+  {id:'tech',  label:'AI & teknik',         color:'#3ec6c6', icon:'chip'},
+  {id:'music', label:'Musik & evenemang',   color:'#e8944f', icon:'note'},
+  {id:'walk',  label:'Promenad & upptäckt', color:'#e9edf4', icon:'compass'},
+  {id:'open',  label:'Öppen för nya möten', color:'#e8c94f', icon:'meet'},
+  {id:'nature',label:'Natur & fiske',       color:'#2e8f63', icon:'leaf'},
+];
+function sig(id){ return SIGNALS.find(s=>s.id===id) || customSig(id); }
+function customSig(id){
+  const p = state.profile;
+  if (p && p.customs) { const c = p.customs.find(c=>c.id===id); if(c) return c; }
+  for (const d of DEMOS){ if(d.customs){ const c=d.customs.find(c=>c.id===id); if(c) return c; } }
+  return {id, label:id, color:'#d66aa8', icon:'spark'};
+}
+const AV_STYLES = [
+  {id:'norrmalm', label:'Norrmalm', desc:'Lång skräddad rock',  coat:'#3a4356', coatLen:'long', hair:'short'},
+  {id:'soeder',   label:'Söder',    desc:'Jacka och keps',      coat:'#5a4a3c', coatLen:'short', hair:'cap'},
+  {id:'atelje',   label:'Ateljé',   desc:'Oversize och konstnärlig', coat:'#6b4a5e', coatLen:'wide', hair:'long'},
+];
+const ACCENTS = ['#d9aa63','#7fa8e0','#c96a6a','#6fbf8f','#b58ae0','#e0b84f','#5fc4c4','#e88fb0'];
+const SKINS = ['#e8c4a0','#c99b73','#9c6f4e','#6e4a33'];
+const DEMOS = [
+  {id:'vera', name:'Vera Lind', demo:true, signal:'art', interests:['art','music','walk'],
+   style:'atelje', accent:'#b58ae0', skin:1, pos:[5.3,0,56], face:Math.PI, area:'out',
+   bio:'Curator. Letar alltid efter nästa ljusinstallation.'},
+  {id:'jonas', name:'Jonas Berg', demo:true, signal:'golf', interests:['golf','sport','food'],
+   style:'norrmalm', accent:'#7fa8e0', skin:0, pos:[9,0,-16], face:-1.2, area:'out',
+   bio:'Handikapp 12 och envis optimist.'},
+  {id:'amira', name:'Amira Khan', demo:true, signal:'tech', interests:['tech','music','open'],
+   style:'soeder', accent:'#5fc4c4', skin:2, pos:[3.2,0,182.5], face:2.4, area:'out',
+   bio:'Bygger saker med språkmodeller. Gillar Svampen som kontor.'},
+  {id:'elias', name:'Elias Ström', demo:true, signal:'food', interests:['food','nature'],
+   style:'norrmalm', accent:'#6fbf8f', skin:0, pos:[487,0,206], face:-.8, area:'in',
+   bio:'Kock på jakt efter höstens bästa kantareller.'},
+];
+const GALLERY = [
+  {id:'fable', title:'Fable Sphere', tag:'Cylinder av berättelser',
+   desc:'En rumslig arbetsyta där du står inne i en cylinder och sveper genom världar av innehåll. Ett av Patriks pågående digitala projekt — här som ljusskulptur.', hue:210},
+  {id:'konst', title:'Konstellation', tag:'Tal, rytm, mönster',
+   desc:'En utforskare av numerologi och biorytmer. Installationen andas i din egen takt.', hue:280},
+  {id:'memory', title:'Memory Library', tag:'Ett bibliotek du kan gå in i',
+   desc:'Minnen som rum. En 3D-prototyp där varje hylla är ett kapitel av ett liv.', hue:40},
+  {id:'tab', title:'Tab', tag:'Delade ögonblick, delade notor',
+   desc:'Vardagens ekonomi som mönster av ljus — vem bjöd på kaffet i tisdags?', hue:150},
+  {id:'brief', title:'My News Brief', tag:'Text-TV, återfödd',
+   desc:'Dagens Sverige i ren text. En hyllning till skärmar som lyste i vardagsrum.', hue:0},
+];
+
+/* ---------- STATE ---------- */
+const state = {
+  profile:null, inside:false, playing:false, intro:true,
+  muted:false, connections:[], waved:{},
+  mobile: ('ontouchstart' in window) && matchMedia('(pointer:coarse)').matches,
+};
+function defaultProfile(){
+  return { name:'', style:'norrmalm', accent:ACCENTS[0], skin:0,
+    interests:['walk'], customs:[], signal:'walk', visibility:'all', account:'guest' };
+}
+function saveProfile(){ try{ localStorage.setItem('sthlmSignalProfile',
+  JSON.stringify({p:state.profile, c:state.connections})); }catch(e){} }
+function loadProfile(){ try{
+  const raw = localStorage.getItem('sthlmSignalProfile'); if(!raw) return false;
+  const d = JSON.parse(raw); state.profile = Object.assign(defaultProfile(), d.p);
+  state.connections = d.c||[]; return !!state.profile.name;
+}catch(e){ return false; } }
+
+/* ---------- ICONS (canvas + inline svg) ---------- */
+function drawIcon(ctx, type, cx, cy, s, color){
+  ctx.save(); ctx.translate(cx,cy); ctx.strokeStyle=color; ctx.fillStyle=color;
+  ctx.lineWidth=s*.14; ctx.lineCap='round'; ctx.lineJoin='round';
+  const u=s/2;
+  switch(type){
+    case 'flag':
+      ctx.beginPath(); ctx.moveTo(-u*.5,u); ctx.lineTo(-u*.5,-u); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(-u*.5,-u); ctx.lineTo(u*.7,-u*.55); ctx.lineTo(-u*.5,-u*.1);
+      ctx.closePath(); ctx.fill(); break;
+    case 'fork':
+      for(let i=-1;i<=1;i++){ ctx.beginPath(); ctx.moveTo(i*u*.42,-u); ctx.lineTo(i*u*.42,-u*.2); ctx.stroke(); }
+      ctx.beginPath(); ctx.moveTo(0,-u*.15); ctx.lineTo(0,u); ctx.stroke(); break;
+    case 'bolt':
+      ctx.beginPath(); ctx.moveTo(u*.25,-u); ctx.lineTo(-u*.45,u*.15); ctx.lineTo(u*.02,u*.15);
+      ctx.lineTo(-u*.25,u); ctx.lineTo(u*.45,-u*.12); ctx.lineTo(0,-u*.12); ctx.closePath(); ctx.fill(); break;
+    case 'palette':
+      ctx.beginPath(); ctx.arc(0,0,u*.85,.5,Math.PI*2-.5); ctx.stroke();
+      [[-.35,-.35],[.35,-.35],[0,.4]].forEach(p=>{ctx.beginPath();ctx.arc(p[0]*u,p[1]*u,u*.16,0,7);ctx.fill();});
+      break;
+    case 'chip':
+      ctx.strokeRect(-u*.55,-u*.55,u*1.1,u*1.1);
+      for(let i=-1;i<=1;i+=2){ for(let j=-1;j<=1;j+=1){
+        ctx.beginPath(); ctx.moveTo(i*u*.55,j*u*.35); ctx.lineTo(i*u*.95,j*u*.35); ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(j*u*.35,i*u*.55); ctx.lineTo(j*u*.35,i*u*.95); ctx.stroke(); }}
+      break;
+    case 'note':
+      ctx.beginPath(); ctx.ellipse(-u*.3,u*.55,u*.32,u*.24,-.4,0,7); ctx.fill();
+      ctx.beginPath(); ctx.moveTo(0,u*.5); ctx.lineTo(0,-u*.8); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(0,-u*.8); ctx.quadraticCurveTo(u*.6,-u*.6,u*.55,-u*.1); ctx.stroke(); break;
+    case 'compass':
+      ctx.beginPath(); ctx.moveTo(0,-u); ctx.lineTo(u*.28,0); ctx.lineTo(0,u); ctx.lineTo(-u*.28,0);
+      ctx.closePath(); ctx.fill(); ctx.beginPath(); ctx.arc(0,0,u*.95,0,7); ctx.stroke(); break;
+    case 'meet':
+      ctx.beginPath(); ctx.arc(-u*.4,-u*.35,u*.3,0,7); ctx.fill();
+      ctx.beginPath(); ctx.arc(u*.4,-u*.35,u*.3,0,7); ctx.fill();
+      ctx.beginPath(); ctx.arc(-u*.4,u*.75,u*.55,Math.PI,0); ctx.fill();
+      ctx.beginPath(); ctx.arc(u*.4,u*.75,u*.55,Math.PI,0); ctx.fill(); break;
+    case 'leaf':
+      ctx.beginPath(); ctx.moveTo(0,u); ctx.quadraticCurveTo(-u*.95,u*.1,0,-u);
+      ctx.quadraticCurveTo(u*.95,u*.1,0,u); ctx.fill();
+      ctx.strokeStyle='rgba(0,0,0,.35)'; ctx.beginPath(); ctx.moveTo(0,u*.8); ctx.lineTo(0,-u*.7); ctx.stroke(); break;
+    default: /* spark */
+      ctx.beginPath();
+      for(let i=0;i<8;i++){ const a=i*Math.PI/4, r=(i%2?u*.4:u); ctx.lineTo(Math.cos(a)*r,Math.sin(a)*r); }
+      ctx.closePath(); ctx.fill();
+  }
+  ctx.restore();
+}
+function iconSVG(type,color,size=16){
+  const c = document.createElement('canvas'); c.width=c.height=48;
+  const x=c.getContext('2d'); drawIcon(x,type,24,24,30,color);
+  const img=document.createElement('img'); img.src=c.toDataURL(); img.width=size; img.height=size;
+  img.style.verticalAlign='middle'; return img.outerHTML.replace('<img','<img alt=""');
+}
+function portrait(name, accent, size=128){
+  const c=document.createElement('canvas'); c.width=c.height=size; const x=c.getContext('2d');
+  const g=x.createLinearGradient(0,0,size,size); g.addColorStop(0,accent); g.addColorStop(1,'#12203c');
+  x.fillStyle=g; x.fillRect(0,0,size,size);
+  x.fillStyle='rgba(255,255,255,.92)'; x.font=`600 ${size*.4}px 'Space Grotesk',sans-serif`;
+  x.textAlign='center'; x.textBaseline='middle';
+  const ini=(name||'?').trim().split(/\s+/).map(w=>w[0]).slice(0,2).join('').toUpperCase();
+  x.fillText(ini,size/2,size/2+size*.03); return c;
+}
+
+/* ---------- THREE SETUP ---------- */
+const canvas = document.getElementById('scene');
+const renderer = new THREE.WebGLRenderer({canvas, antialias:true});
+renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+const scene = new THREE.Scene();
+const camera = new THREE.PerspectiveCamera(58, 1, .1, 900);
+scene.fog = new THREE.Fog(0x14274a, 30, 230);
+
+const hemi = new THREE.HemisphereLight(0x5a7ab8, 0x0c1626, 1.0); scene.add(hemi);
+const moon = new THREE.DirectionalLight(0x8fb0e8, .45); moon.position.set(-60,90,-40); scene.add(moon);
+const warmFill = new THREE.DirectionalLight(0xd9aa63, .12); warmFill.position.set(30,20,120); scene.add(warmFill);
+
+/* sky dome: blåtimmen gradient with warm horizon glow */
+(function sky(){
+  const c=document.createElement('canvas'); c.width=32; c.height=256; const x=c.getContext('2d');
+  const g=x.createLinearGradient(0,0,0,256);
+  g.addColorStop(0,'#050d1f'); g.addColorStop(.42,'#0d2148'); g.addColorStop(.68,'#1d3a6b');
+  g.addColorStop(.86,'#3d5a8c'); g.addColorStop(.95,'#8a6a52'); g.addColorStop(1,'#3a2c22');
+  x.fillStyle=g; x.fillRect(0,0,32,256);
+  const tex=new THREE.CanvasTexture(c);
+  const dome=new THREE.Mesh(new THREE.SphereGeometry(820,24,18),
+    new THREE.MeshBasicMaterial({map:tex, side:THREE.BackSide, fog:false}));
+  scene.add(dome);
+  /* stars */
+  const pts=[]; for(let i=0;i<420;i++){ const a=Math.random()*Math.PI*2, e=Math.random()*.42+.12, r=800;
+    pts.push(Math.cos(a)*Math.cos(e)*r, Math.sin(e)*r, Math.sin(a)*Math.cos(e)*r); }
+  const sg=new THREE.BufferGeometry(); sg.setAttribute('position', new THREE.Float32BufferAttribute(pts,3));
+  scene.add(new THREE.Points(sg, new THREE.PointsMaterial({color:0xcfe0ff,size:1.6,sizeAttenuation:false,fog:false,transparent:true,opacity:.7})));
+})();
+
+/* ---------- MATERIAL HELPERS ---------- */
+const M = {
+  lam:(c,o={})=>new THREE.MeshLambertMaterial(Object.assign({color:c},o)),
+  bas:(c,o={})=>new THREE.MeshBasicMaterial(Object.assign({color:c},o)),
+};
+function glowSprite(color, size, opacity=.5){
+  const c=document.createElement('canvas'); c.width=c.height=64; const x=c.getContext('2d');
+  const g=x.createRadialGradient(32,32,2,32,32,32);
+  g.addColorStop(0,'rgba(255,255,255,1)'); g.addColorStop(.35,color); g.addColorStop(1,'rgba(0,0,0,0)');
+  x.fillStyle=g; x.fillRect(0,0,64,64);
+  const sp=new THREE.Sprite(new THREE.SpriteMaterial({map:new THREE.CanvasTexture(c),
+    transparent:true, opacity, depthWrite:false, blending:THREE.AdditiveBlending}));
+  sp.scale.set(size,size,1); return sp;
+}
+function badgeSprite(signal){
+  const s=sig(signal);
+  const c=document.createElement('canvas'); c.width=c.height=128; const x=c.getContext('2d');
+  x.beginPath(); x.arc(64,64,52,0,7); x.fillStyle='rgba(8,14,28,.88)'; x.fill();
+  x.lineWidth=9; x.strokeStyle=s.color; x.stroke();
+  drawIcon(x, s.icon, 64, 64, 58, '#f2f6ff');
+  const sp=new THREE.Sprite(new THREE.SpriteMaterial({map:new THREE.CanvasTexture(c), transparent:true, depthWrite:false}));
+  sp.scale.set(.62,.62,1); return sp;
+}
+
+/* facade textures: diffuse + emissive (lit windows) */
+function facadeTex(wm, hm, palette, litProb=.42){
+  const px=26; const W=Math.max(64,Math.round(wm*px)), H=Math.max(64,Math.round(hm*px));
+  const d=document.createElement('canvas'); d.width=W; d.height=H; const dx=d.getContext('2d');
+  const e=document.createElement('canvas'); e.width=W; e.height=H; const ex=e.getContext('2d');
+  dx.fillStyle=palette; dx.fillRect(0,0,W,H);
+  /* subtle stone noise + floor bands */
+  for(let i=0;i<W*H/120;i++){ dx.fillStyle=`rgba(${Math.random()<.5?0:255},${Math.random()<.5?0:255},255,.02)`;
+    dx.fillRect(Math.random()*W, Math.random()*H, 3, 3); }
+  ex.fillStyle='#000'; ex.fillRect(0,0,W,H);
+  const floorH=px*3.1, winW=px*1.15, winH=px*1.7, gapX=px*1.0;
+  const floors=Math.floor((hm-2)/3.1), cols=Math.floor((wm-1)/((winW+gapX)/px));
+  const startY=H-px*1.2-floors*floorH;
+  for(let f=0; f<floors; f++){
+    const y=startY+f*floorH+px*.7;
+    dx.fillStyle='rgba(255,255,255,.05)'; dx.fillRect(0, startY+f*floorH-2, W, 2);
+    for(let cI=0;cI<cols;cI++){
+      const xw=(W-cols*(winW+gapX)+gapX)/2 + cI*(winW+gapX);
+      dx.fillStyle='#0b1322'; dx.fillRect(xw,y,winW,winH);
+      dx.strokeStyle='rgba(230,235,245,.25)'; dx.lineWidth=2; dx.strokeRect(xw,y,winW,winH);
+      dx.beginPath(); dx.moveTo(xw,y+winH/2); dx.lineTo(xw+winW,y+winH/2); dx.stroke();
+      if(Math.random()<litProb && f<floors){ /* varmt fönsterljus */
+        const warm=['#ffca82','#ffd9a3','#f4b76b','#e8e0c0'][Math.floor(Math.random()*4)];
+        const g=ex.createLinearGradient(xw,y,xw,y+winH);
+        g.addColorStop(0,warm); g.addColorStop(1,'#a86f38');
+        ex.fillStyle=g; ex.fillRect(xw+1,y+1,winW-2,winH-2);
+        if(Math.random()<.3){ ex.fillStyle='rgba(0,0,0,.5)';
+          ex.fillRect(xw+winW*.25, y+2, winW*.14, winH-4); } /* siluett i fönstret */
+      }
+    }
+  }
+  /* butiksplan: varmt lysande skyltfönster */
+  const shopH=px*2.4;
+  dx.fillStyle='#0d1524'; dx.fillRect(0,H-shopH,W,shopH);
+  const nShops=Math.max(1,Math.floor(wm/7));
+  for(let sI=0;sI<nShops;sI++){
+    const sw=W/nShops, xw=sI*sw+px*.35;
+    const lit=Math.random()<.85;
+    dx.fillStyle=lit?'#1a2438':'#0a101d'; dx.fillRect(xw,H-shopH+px*.3,sw-px*.7,shopH-px*.4);
+    if(lit){ const g=ex.createLinearGradient(0,H-shopH,0,H);
+      g.addColorStop(0,Math.random()<.7?'#ffc27a':'#bcd4ff'); g.addColorStop(1,'#523314');
+      ex.fillStyle=g; ex.fillRect(xw,H-shopH+px*.3,sw-px*.7,shopH-px*.4); }
+  }
+  const mt=new THREE.CanvasTexture(d), et=new THREE.CanvasTexture(e);
+  return {map:mt, em:et};
+}
+const FACADE_PALETTES=['#8a7a64','#7d6f5e','#94826a','#6e6558','#a08668','#75695f','#8c7460','#665e52'];
+
+/* ---------- WORLD ---------- */
+const world = new THREE.Group(); scene.add(world);
+const interior = new THREE.Group(); interior.visible=false; scene.add(interior);
+const lampGlows=[]; const artUpdaters=[];
+
+function box(g, w,h,d, mat, x,y,z, ry=0){
+  const m=new THREE.Mesh(new THREE.BoxGeometry(w,h,d), mat);
+  m.position.set(x,y,z); m.rotation.y=ry; g.add(m); return m;
+}
+function building(g, w,h,d, x,z, face /*'px','nx','pz','nz'*/, palette, litProb){
+  const t=facadeTex(face==='px'||face==='nx'?d:w, h, palette, litProb);
+  const fmat=new THREE.MeshLambertMaterial({map:t.map, emissive:0xffffff, emissiveMap:t.em, emissiveIntensity:.95});
+  const side=M.lam(palette); const roof=M.lam('#3a3630');
+  const mats=[side,side,roof,side,side,side];
+  const idx={px:0,nx:1,pz:4,nz:5}[face]; mats[idx]=fmat;
+  const m=new THREE.Mesh(new THREE.BoxGeometry(w,h,d), mats);
+  m.position.set(x,h/2,z); g.add(m);
+  /* roofline detaljer */
+  if(Math.random()<.5) box(g, (face==='px'||face==='nx'?d:w)*.3, 1.6, 2.4, M.lam('#4a453c'),
+    x+(Math.random()-.5)*w*.3, h+.8, z+(Math.random()-.5)*d*.3);
+  return m;
+}
+function tree(g,x,z,s=1){
+  box(g,.22*s,2.4*s,.22*s,M.lam('#3d3128'),x,1.2*s,z);
+  const fol=M.lam('#22412f');
+  [[0,2.9,.0,1.0],[.5,2.4,.3,.7],[-.45,2.5,-.25,.65],[.1,3.5,-.1,.6]].forEach(p=>{
+    const m=new THREE.Mesh(new THREE.SphereGeometry(p[3]*s,7,6),fol);
+    m.position.set(x+p[0]*s,p[1]*s,z+p[2]*s); m.scale.y=.85; g.add(m); });
+}
+function lamp(g,x,z,real=false){
+  box(g,.12,4.6,.12,M.lam('#2c3240'),x,2.3,z);
+  const arm=box(g,.9,.08,.08,M.lam('#2c3240'),x+.4,4.55,z);
+  const head=new THREE.Mesh(new THREE.SphereGeometry(.16,8,6),M.bas('#ffd9a0')); head.position.set(x+.8,4.45,z); g.add(head);
+  const gl=glowSprite('#ffbe70',2.6,.55); gl.position.set(x+.8,4.45,z); g.add(gl); lampGlows.push(gl);
+  /* ljuspöl på våt sten */
+  const pool=new THREE.Mesh(new THREE.CircleGeometry(1.7,20),
+    M.bas('#ffbe70',{transparent:true,opacity:.10,blending:THREE.AdditiveBlending,depthWrite:false}));
+  pool.rotation.x=-Math.PI/2; pool.position.set(x+.8,.015,z); g.add(pool);
+  if(real){ const pl=new THREE.PointLight(0xffc27a,.8,16,2); pl.position.set(x+.8,4.2,z); g.add(pl); }
+}
+function bench(g,x,z,ry=0){
+  const grp=new THREE.Group(); grp.position.set(x,0,z); grp.rotation.y=ry; g.add(grp);
+  box(grp,1.8,.09,.5,M.lam('#5a4634'),0,.45,0);
+  box(grp,1.8,.5,.08,M.lam('#5a4634'),0,.72,-.24);
+  [-0.7,0.7].forEach(o=>box(grp,.08,.45,.4,M.lam('#2c3240'),o,.22,0));
+}
+
+/* ground: torg + gata + plaza med stenstruktur */
+(function ground(){
+  const c=document.createElement('canvas'); c.width=c.height=256; const x=c.getContext('2d');
+  x.fillStyle='#232a38'; x.fillRect(0,0,256,256);
+  for(let i=0;i<900;i++){ x.fillStyle=`rgba(${140+Math.random()*40|0},${145+Math.random()*40|0},${165+Math.random()*40|0},.07)`;
+    x.fillRect(Math.random()*256,Math.random()*256,3+Math.random()*4,2+Math.random()*3); }
+  x.strokeStyle='rgba(10,14,24,.5)'; x.lineWidth=1;
+  for(let i=0;i<256;i+=16){ x.beginPath();x.moveTo(0,i);x.lineTo(256,i);x.stroke();
+    x.beginPath();x.moveTo(i,0);x.lineTo(i,256);x.stroke(); }
+  const t=new THREE.CanvasTexture(c); t.wrapS=t.wrapT=THREE.RepeatWrapping; t.repeat.set(60,60);
+  const mat=new THREE.MeshPhongMaterial({map:t, color:'#aab4cc', shininess:60, specular:0x3a4a6a});
+  const gm=new THREE.Mesh(new THREE.PlaneGeometry(700,700), mat);
+  gm.rotation.x=-Math.PI/2; gm.position.y=0; world.add(gm);
+  /* mittstråk på Biblioteksgatan: ljusare gångyta */
+  const strip=new THREE.Mesh(new THREE.PlaneGeometry(9,162),
+    M.lam('#3a4256'));
+  strip.rotation.x=-Math.PI/2; strip.position.set(0,.01,81); world.add(strip);
+})();
+
+/* Norrmalmstorg */
+(function norrmalmstorg(){
+  const g=world;
+  building(g, 44,22,14, 0,-49, 'pz', FACADE_PALETTES[2], .5);
+  building(g, 14,26,40, -32,-18, 'px', FACADE_PALETTES[0], .45);
+  building(g, 14,20,40, 32,-18, 'nx', FACADE_PALETTES[5], .45);
+  building(g, 18,24,12, -17,8, 'nz', FACADE_PALETTES[1], .4);
+  building(g, 18,21,12, 17,8, 'nz', FACADE_PALETTES[3], .4);
+  /* klockstapel-antydan (Norrmalmstorgs ur) */
+  const clk=new THREE.Group(); clk.position.set(-12,0,-10); g.add(clk);
+  box(clk,.3,5.2,.3,M.lam('#28405e'),0,2.6,0);
+  const face=new THREE.Mesh(new THREE.CylinderGeometry(.75,.75,.2,20),M.bas('#f4ead0'));
+  face.rotation.x=Math.PI/2; face.position.y=5.6; clk.add(face);
+  const cg=glowSprite('#fff4d0',2.4,.5); cg.position.set(0,5.6,0); clk.add(cg);
+  bench(g,6,-8,.4); bench(g,-4,-20,-.5); bench(g,12,-24,2.6);
+  tree(g,-8,-26); tree(g,14,-8,.9); tree(g,-16,2,.85);
+  lamp(g,-20,-8,true); lamp(g,18,-20); lamp(g,4,2,true);
+  /* spårvagnsantydan: hållplatsskylt */
+  box(g,.1,3,.1,M.lam('#2c3240'),22,1.5,-2);
+  const sgn=makeSign('7  DJURGÅRDEN','#274a6e'); sgn.position.set(22,3.2,-2); g.add(sgn);
+})();
+
+function makeSign(text,bg,fg='#eaf2ff',w=3){
+  const c=document.createElement('canvas'); c.width=512; c.height=128; const x=c.getContext('2d');
+  x.fillStyle=bg; x.fillRect(0,0,512,128);
+  x.fillStyle=fg; x.font=`600 54px 'Space Grotesk',sans-serif`; x.textAlign='center'; x.textBaseline='middle';
+  x.letterSpacing='6px'; x.fillText(text,256,68);
+  const sp=new THREE.Sprite(new THREE.SpriteMaterial({map:new THREE.CanvasTexture(c),transparent:true}));
+  sp.scale.set(w,w/4,1); return sp;
+}
+
+/* Biblioteksgatan: fasader, träd, lyktor, skyltfönster */
+(function biblioteksgatan(){
+  const g=world;
+  let z=4;
+  const segs=[14,18,12,16,14,20,12,16,14,16];
+  segs.forEach((L,i)=>{
+    const zC=z+L/2;
+    if(!(zC>62&&zC<80)){ /* lämna korsning öppen */
+      building(g, 12, 17+Math.random()*9, L-1, -13.5, zC, 'px', FACADE_PALETTES[i%8], .42);
+      building(g, 12, 16+Math.random()*10, L-1, 13.5, zC, 'nx', FACADE_PALETTES[(i+3)%8], .42);
+    }
+    z+=L;
+  });
+  /* korsning: Mäster Samuelsgatan-antydan med djup */
+  building(g, 26,19,10, -27, 60, 'pz', FACADE_PALETTES[4], .38);
+  building(g, 26,21,10, -27, 84, 'nz', FACADE_PALETTES[6], .38);
+  building(g, 26,18,10, 27, 60, 'pz', FACADE_PALETTES[1], .38);
+  building(g, 26,20,10, 27, 84, 'nz', FACADE_PALETTES[7], .38);
+  building(g, 12,22,14, -44, 72, 'px', FACADE_PALETTES[0], .35); /* fond i väster */
+  building(g, 12,22,14, 44, 72, 'nx', FACADE_PALETTES[2], .35);
+  const st1=makeSign('MÄSTER SAMUELSGATAN','#1c2a44'); st1.position.set(-8.2,4.6,66); g.add(st1);
+  const st2=makeSign('BIBLIOTEKSGATAN','#1c2a44'); st2.position.set(8.2,4.6,4); g.add(st2);
+  /* träd + lyktor i rytm */
+  for(let zz=14; zz<156; zz+=18){
+    if(zz>60&&zz<82) continue;
+    tree(g,-5.4,zz, .8+Math.random()*.3); tree(g,5.4,zz+9, .8+Math.random()*.3);
+    lamp(g,-6.2,zz+9, zz===32||zz===104);
+    lamp(g,6.2,zz, zz===50||zz===122);
+  }
+  bench(g,-5,40,Math.PI/2); bench(g,5,96,-Math.PI/2); bench(g,-5,130,Math.PI/2);
+  /* parkerade cyklar */
+  for(const [bx,bz] of [[-6.1,24],[-6.1,25],[6.1,88],[6.1,89.2]]){
+    const b=new THREE.Group(); b.position.set(bx,0,bz); b.rotation.y=Math.PI/2+(Math.random()-.5)*.3; g.add(b);
+    [[-.45],[.45]].forEach(o=>{ const w=new THREE.Mesh(new THREE.TorusGeometry(.3,.03,6,14),M.lam('#222')); 
+      w.position.set(o[0],.3,0); b.add(w); });
+    box(b,.9,.05,.05,M.lam('#7a3a3a'),0,.55,0);
+    box(b,.05,.4,.05,M.lam('#7a3a3a'),.3,.75,0);
+  }
+})();
+
+/* Gatuögonblick 1: digitalt konstfönster (reagerar på dig) */
+const artWindow=(function(){
+  const c=document.createElement('canvas'); c.width=256; c.height=160; const ctx=c.getContext('2d');
+  const tex=new THREE.CanvasTexture(c);
+  const m=new THREE.Mesh(new THREE.PlaneGeometry(6,3.6),
+    new THREE.MeshBasicMaterial({map:tex}));
+  m.position.set(-7.45,2.2,54); m.rotation.y=Math.PI/2; world.add(m);
+  const frame=box(world,.2,4.0,6.5,M.lam('#101724'),-7.55,2.2,54);
+  const sign=makeSign('GALLERI NOD','#0e1830','#9fd4ff',2.4); sign.position.set(-7.2,4.6,54); world.add(sign);
+  let pulse=0;
+  artUpdaters.push((t)=>{
+    const near = !state.inside && player ? dist2(player.group.position.x,player.group.position.z,-7,54)<49 : false;
+    pulse += ((near?1:0)-pulse)*.04;
+    const g=ctx.createLinearGradient(0,0,256,160);
+    const h=(t*12)%360;
+    g.addColorStop(0,`hsl(${h},60%,${14+pulse*8}%)`);
+    g.addColorStop(1,`hsl(${(h+80)%360},70%,${22+pulse*10}%)`);
+    ctx.fillStyle=g; ctx.fillRect(0,0,256,160);
+    for(let i=0;i<7;i++){
+      const yy=20+i*18+Math.sin(t*1.4+i)*8*(1+pulse);
+      ctx.strokeStyle=`hsla(${(h+i*30)%360},80%,${65}%,${.5+pulse*.4})`;
+      ctx.lineWidth=2+pulse*2;
+      ctx.beginPath(); ctx.moveTo(0,yy);
+      for(let xx=0;xx<=256;xx+=16) ctx.lineTo(xx, yy+Math.sin(t*2+xx*.05+i)*6);
+      ctx.stroke();
+    }
+    if(pulse>.05 && state.profile){ /* verket svarar med din accentfärg */
+      ctx.strokeStyle=state.profile.accent; ctx.lineWidth=5; ctx.globalAlpha=pulse;
+      ctx.strokeRect(8,8,240,144); ctx.globalAlpha=1;
+    }
+    tex.needsUpdate=true;
+  });
+  return m;
+})();
+
+/* Gatuögonblick 2: modeskyltfönster som lånar din accent */
+const fashion=(function(){
+  const g=new THREE.Group(); g.position.set(7.45,0,110); g.rotation.y=-Math.PI/2; world.add(g);
+  box(g,7,4.2,.3,M.lam('#141b2c'),0,2.1,.1);
+  const inner=new THREE.Mesh(new THREE.PlaneGeometry(6.4,3.6),M.bas('#241d16'));
+  inner.position.set(0,2.05,-.06); g.add(inner);
+  const wl=new THREE.PointLight(0xffd9a0,.9,7,2); wl.position.set(0,3.4,1); g.add(wl);
+  const mann=new THREE.Group(); mann.position.set(0,.35,.4); g.add(mann);
+  box(mann,.5,1.1,.3,M.lam('#e8e2d6'),0,1.0,0);
+  const hd=new THREE.Mesh(new THREE.SphereGeometry(.17,10,8),M.lam('#e8e2d6')); hd.position.y=1.75; mann.add(hd);
+  const scarfM=M.lam('#d9aa63');
+  const scarf=new THREE.Mesh(new THREE.TorusGeometry(.2,.06,8,16),scarfM);
+  scarf.position.y=1.55; scarf.rotation.x=Math.PI/2.2; mann.add(scarf);
+  const sign=makeSign('ATELJÉ HEDVIG','#241a10','#ffd9a0',2.6); sign.position.set(7.2,4.7,110); world.add(sign);
+  artUpdaters.push(()=>{
+    if(!state.profile||state.inside||!player) return;
+    const near=dist2(player.group.position.x,player.group.position.z,7,110)<36;
+    const target=new THREE.Color(near?state.profile.accent:'#d9aa63');
+    scarfM.color.lerp(target,.05);
+  });
+  return g;
+})();
+
+/* Stureplan + Svampen */
+(function stureplan(){
+  const g=world;
+  building(g, 24,24,14, -20,220, 'pz', FACADE_PALETTES[0], .5);
+  building(g, 24,27,14, 20,220, 'pz', FACADE_PALETTES[3], .5);
+  building(g, 14,25,26, 36,178, 'nx', FACADE_PALETTES[5], .48);
+  building(g, 14,23,20, 36,150, 'nx', FACADE_PALETTES[1], .44);
+  /* Sturegallerians fasad i väster */
+  const gal=building(g, 14,21,46, -37,186, 'px', FACADE_PALETTES[2], .5);
+  /* entré: varm portal + skylt */
+  const porW=6;
+  box(g,.6,5.2,porW+1.4,M.lam('#1a2436'),-29.8,2.6,185);
+  const doorGlow=new THREE.Mesh(new THREE.PlaneGeometry(porW,4.6),
+    M.bas('#ffca82',{transparent:true,opacity:.9}));
+  doorGlow.rotation.y=Math.PI/2; doorGlow.position.set(-29.45,2.3,185); g.add(doorGlow);
+  const dg=glowSprite('#ffc27a',8,.5); dg.position.set(-28.6,2.6,185); g.add(dg);
+  const gs=makeSign('STUREGALLERIAN','#20180e','#ffd9a0',5); gs.position.set(-28.9,5.6,185); g.add(gs);
+  const pl=new THREE.PointLight(0xffc27a,1.1,20,2); pl.position.set(-27,3.5,185); g.add(pl);
+  /* norra fonden med gap där en buss glider förbi */
+  building(g, 20,22,12, -34,232, 'pz', FACADE_PALETTES[6], .4);
+  building(g, 20,20,12, 34,232, 'pz', FACADE_PALETTES[4], .4);
+  const bs=makeSign('STUREPLAN','#1c2a44'); bs.position.set(-8,5,164); g.add(bs);
+  /* SVAMPEN */
+  const sv=new THREE.Group(); sv.position.set(0,0,186); g.add(sv);
+  const trunk=new THREE.Mesh(new THREE.CylinderGeometry(.55,.7,3.1,14),M.lam('#b8b2a4')); trunk.position.y=1.55; sv.add(trunk);
+  const cap=new THREE.Mesh(new THREE.CylinderGeometry(4.9,4.3,.65,22),M.lam('#c8c2b2')); cap.position.y=3.5; sv.add(cap);
+  const rim=new THREE.Mesh(new THREE.TorusGeometry(4.55,.18,8,26),M.lam('#a8a294'));
+  rim.rotation.x=Math.PI/2; rim.position.y=3.2; sv.add(rim);
+  const under=new THREE.Mesh(new THREE.CircleGeometry(4.2,22),M.bas('#ffe0b0'));
+  under.rotation.x=Math.PI/2; under.position.y=3.16; sv.add(under);
+  const sl=new THREE.PointLight(0xffd9a0,1.5,16,2); sl.position.y=2.8; sv.add(sl);
+  const svg=glowSprite('#ffd9a0',10,.35); svg.position.y=2.6; sv.add(svg);
+  /* rund bänk */
+  const seat=new THREE.Mesh(new THREE.CylinderGeometry(1.5,1.5,.45,18),M.lam('#5a4634')); seat.position.y=.23; sv.add(seat);
+  lamp(g,-14,168,true); lamp(g,14,200); lamp(g,-16,204);
+  tree(g,16,166); tree(g,-18,172,.9); tree(g,20,206,.85);
+  bench(g,10,176,-.8); bench(g,-10,198,2.2);
+})();
+
+/* Bakgrundstrafik: taxi på tvärgatan, buss bortom Stureplan */
+const traffic=[];
+(function makeTraffic(){
+  function car(color,y=0){
+    const c=new THREE.Group();
+    box(c,1.8,.55,4.2,M.lam(color),0,.55,0);
+    box(c,1.6,.5,2.2,M.lam(color),0,1.05,-.2);
+    const hl=glowSprite('#fff0c0',1.4,.8); hl.position.set(0,.6,2.2); c.add(hl);
+    const tl=glowSprite('#ff6a5a',1.0,.7); tl.position.set(0,.6,-2.2); c.add(tl);
+    world.add(c); return c;
+  }
+  const taxi=car('#3a3f4c'); traffic.push({m:taxi, axis:'x', at:72, from:-60, to:60, sp:7, p:Math.random()});
+  const taxi2=car('#22364e'); traffic.push({m:taxi2, axis:'x', at:71, from:60, to:-60, sp:6, p:Math.random()});
+  const bus=new THREE.Group();
+  box(bus,2.4,2.6,10,M.lam('#274a6e'),0,1.5,0);
+  for(let i=-4;i<=4;i+=1.4){ const w=new THREE.Mesh(new THREE.PlaneGeometry(1.1,.9),M.bas('#ffe0a8'));
+    w.position.set(1.25,1.9,i); w.rotation.y=Math.PI/2; bus.add(w); }
+  world.add(bus); traffic.push({m:bus, axis:'x', at:238, from:-70, to:70, sp:5, p:.3});
+})();
+
+/* ---------- STUREGALLERIAN (interiör vid x≈500) ---------- */
+const IN={cx:500, z0:152, z1:218, x0:474, x1:526};
+const artFrames=[];
+(function buildInterior(){
+  const g=interior;
+  /* golv: varm marmor */
+  const c=document.createElement('canvas'); c.width=c.height=256; const x=c.getContext('2d');
+  x.fillStyle='#cbb99a'; x.fillRect(0,0,256,256);
+  for(let i=0;i<50;i++){ x.strokeStyle='rgba(120,100,70,.15)'; x.lineWidth=1+Math.random()*2;
+    x.beginPath(); let px=Math.random()*256, py=Math.random()*256; x.moveTo(px,py);
+    for(let j=0;j<5;j++){ px+=(Math.random()-.5)*60; py+=(Math.random()-.5)*60; x.lineTo(px,py);} x.stroke(); }
+  x.strokeStyle='rgba(80,60,40,.4)'; x.lineWidth=3;
+  x.strokeRect(0,0,128,128); x.strokeRect(128,128,128,128);
+  const ft=new THREE.CanvasTexture(c); ft.wrapS=ft.wrapT=THREE.RepeatWrapping; ft.repeat.set(8,8);
+  const floor=new THREE.Mesh(new THREE.PlaneGeometry(IN.x1-IN.x0, IN.z1-IN.z0),
+    new THREE.MeshPhongMaterial({map:ft, shininess:80, specular:0x554433}));
+  floor.rotation.x=-Math.PI/2; floor.position.set(IN.cx,0,(IN.z0+IN.z1)/2); g.add(floor);
+  /* väggar i krämsten med butiksnischer */
+  const wallM=M.lam('#d8cdb6');
+  const W=IN.x1-IN.x0, D=IN.z1-IN.z0, H=9;
+  box(g,W,H,.6,wallM,IN.cx,H/2,IN.z0); box(g,W,H,.6,wallM,IN.cx,H/2,IN.z1);
+  box(g,.6,H,D,wallM,IN.x0,H/2,(IN.z0+IN.z1)/2); box(g,.6,H,D,wallM,IN.x1,H/2,(IN.z0+IN.z1)/2);
+  /* glastak: balkar + kvällshimmel */
+  const skyP=new THREE.Mesh(new THREE.PlaneGeometry(W,D),M.bas('#16305c'));
+  skyP.rotation.x=Math.PI/2; skyP.position.set(IN.cx,H,(IN.z0+IN.z1)/2); g.add(skyP);
+  for(let zz=IN.z0+4; zz<IN.z1; zz+=6) box(g,W,.35,.5,M.lam('#8a7a5c'),IN.cx,H-.2,zz);
+  box(g,.5,.35,D,M.lam('#8a7a5c'),IN.cx,H-.2,(IN.z0+IN.z1)/2);
+  /* kolonner + varma lampor */
+  for(const zz of [166,186,206]) for(const xx of [IN.cx-16,IN.cx+16]){
+    const col=new THREE.Mesh(new THREE.CylinderGeometry(.55,.65,H,12),M.lam('#c4b89e'));
+    col.position.set(xx,H/2,zz); g.add(col);
+    const l=new THREE.PointLight(0xffd9a8, .9, 20, 2); l.position.set(xx,H-2,zz); g.add(l);
+    const gl=glowSprite('#ffd9a8',4,.4); gl.position.set(xx,H-1.6,zz); g.add(gl);
+  }
+  const amb=new THREE.PointLight(0xffe0b8,.7,60,1.6); amb.position.set(IN.cx,6,186); g.add(amb);
+  /* utgång i söder */
+  const ex=new THREE.Mesh(new THREE.PlaneGeometry(6,4.6),M.bas('#2c4a7e'));
+  ex.position.set(IN.cx,2.3,IN.z0+.35); g.add(ex);
+  const exg=glowSprite('#9fc0ff',7,.4); exg.position.set(IN.cx,2.5,IN.z0+1); g.add(exg);
+  const exs=makeSign('TILL STUREPLAN','#101a2e','#bcd4ff',4); exs.position.set(IN.cx,5.4,IN.z0+1); g.add(exs);
+
+  /* — SALONGEN (öster): soffor, bord, varm samvaro — */
+  const salS=makeSign('SALONGEN','#2a1c0e','#ffd9a0',3.4); salS.position.set(IN.cx+17,4.6,206); g.add(salS);
+  function sofa(xx,zz,ry){ const s=new THREE.Group(); s.position.set(xx,0,zz); s.rotation.y=ry; g.add(s);
+    box(s,2.4,.5,.9,M.lam('#7e5a46'),0,.35,0); box(s,2.4,.7,.22,M.lam('#8e6a52'),0,.85,-.36);
+    [[-1.05],[1.05]].forEach(o=>box(s,.24,.7,.9,M.lam('#6e4e3c'),o[0],.6,0)); }
+  sofa(IN.cx+14,204,-.6); sofa(IN.cx+19,209,2.4); sofa(IN.cx+13,211,1.1);
+  const tbl=new THREE.Mesh(new THREE.CylinderGeometry(.7,.6,.75,12),M.lam('#4a3828'));
+  tbl.position.set(IN.cx+15.6,.38,207.8); g.add(tbl);
+  const candle=glowSprite('#ffc27a',1.6,.8); candle.position.set(IN.cx+15.6,1.0,207.8); g.add(candle);
+
+  /* — GALLERIET (norr): fem ljusinstallationer — */
+  const galS=makeSign('GALLERIET','#101a30','#9fd4ff',3.4); galS.position.set(IN.cx,5.4,IN.z1-1.2); g.add(galS);
+  GALLERY.forEach((art,i)=>{
+    const xx=IN.cx-18+i*9;
+    const fr=new THREE.Group(); fr.position.set(xx,0,IN.z1-1.4); g.add(fr);
+    box(fr,5.4,4,.3,M.lam('#181c26'),0,2.4,0);
+    const c2=document.createElement('canvas'); c2.width=192; c2.height=128; const cx2=c2.getContext('2d');
+    const t2=new THREE.CanvasTexture(c2);
+    const pm=new THREE.Mesh(new THREE.PlaneGeometry(4.8,3.4),M.bas('#000',{map:t2}));
+    pm.position.set(0,2.4,.18); fr.add(pm);
+    const plq=makeSign(art.title.toUpperCase(),'#0c1220','#e8ddc0',3); plq.position.set(0,.6,.6); fr.add(plq);
+    artFrames.push({art, group:fr, x:xx, z:IN.z1-1.4});
+    artUpdaters.push((t)=>{
+      if(!state.inside) return;
+      cx2.fillStyle=`hsl(${art.hue},45%,8%)`; cx2.fillRect(0,0,192,128);
+      if(art.id==='fable'){ /* cylinder av paneler */
+        for(let k=0;k<10;k++){ const a=t*.6+k*.63, w=Math.max(4,Math.cos(a)*28+18);
+          cx2.fillStyle=`hsla(${art.hue},70%,${40+Math.sin(a)*15}%,${.3+Math.cos(a)*.3})`;
+          cx2.fillRect(96+Math.sin(a)*70-w/2, 24, w, 80); } }
+      else if(art.id==='konst'){ for(let k=0;k<6;k++){ const r=14+k*9+Math.sin(t*(1+k*.2))*4;
+          cx2.strokeStyle=`hsla(${art.hue+k*8},70%,60%,.6)`; cx2.lineWidth=2;
+          cx2.beginPath(); cx2.arc(96,64,r,0,7); cx2.stroke(); } }
+      else if(art.id==='memory'){ for(let k=0;k<5;k++) for(let j=0;j<8;j++){
+          const on=Math.sin(t*.8+k*2+j)>0.2;
+          cx2.fillStyle=on?`hsla(${art.hue},80%,${55}%,.85)`:'rgba(255,255,255,.06)';
+          cx2.fillRect(16+j*20, 16+k*20, 14, 14); } }
+      else if(art.id==='tab'){ for(let k=0;k<7;k++){ const h2=20+((Math.sin(t*.7+k*1.7)+1)/2)*80;
+          cx2.fillStyle=`hsla(${art.hue},60%,55%,.8)`; cx2.fillRect(16+k*24, 118-h2, 16, h2); } }
+      else { cx2.fillStyle='#0a0f1a'; cx2.fillRect(0,0,192,128);
+        cx2.font='bold 13px monospace'; for(let k=0;k<7;k++){
+          cx2.fillStyle=k===((t*2|0)%7)?'#ffd9a0':'#7fa8e0';
+          cx2.fillText('SVERIGE '+String(100+k*11)+'  ▒▒▒▒▒▒▒▒▒', 14, 22+k*15); } }
+      t2.needsUpdate=true;
+    });
+  });
+
+  /* — SIGNALSTUDION (väster): spegel + piedestal — */
+  const stS=makeSign('SIGNALSTUDION','#241a2e','#d8b0ff',3.8); stS.position.set(IN.cx-17,4.6,166); g.add(stS);
+  const mir=new THREE.Mesh(new THREE.PlaneGeometry(3,4.4),
+    new THREE.MeshPhongMaterial({color:'#324258',shininess:120,specular:0xaaccff}));
+  mir.position.set(IN.x0+.7,2.4,166); mir.rotation.y=Math.PI/2; g.add(mir);
+  box(g,3.4,4.8,.2,M.lam('#8a7a5c'),IN.x0+.55,2.4,166);
+  const ped=new THREE.Mesh(new THREE.CylinderGeometry(.8,.9,.9,14),M.lam('#c4b89e'));
+  ped.position.set(IN.cx-16,0.45,166); g.add(ped);
+  SIGNALS.slice(0,6).forEach((s,i)=>{ const b=badgeSprite(s.id); 
+    b.position.set(IN.cx-16+Math.cos(i)*0.01, 1.6+ i*0.0, 166); });
+  const halo=glowSprite('#d8b0ff',4,.5); halo.position.set(IN.cx-16,1.7,166); g.add(halo);
+  const studioB=badgeSprite(state.profile?state.profile.signal:'walk'); studioB.position.set(IN.cx-16,1.6,166); g.add(studioB);
+  interior.userData.studioBadge=studioB;
+})();
+
+/* ---------- WALKABLE AREAS ---------- */
+const WALK_OUT=[
+  [-23,23,-36,4],        /* Norrmalmstorg */
+  [-6.6,6.6,0,164],      /* Biblioteksgatan */
+  [-25,-6.6,64,80],      /* korsning väster */
+  [6.6,25,64,80],        /* korsning öster */
+  [-29,29,162,212],      /* Stureplan */
+];
+const WALK_IN=[[IN.x0+1.4,IN.x1-1.4,IN.z0+1.4,IN.z1-2.6]];
+function inRect(r,x,z){ return x>=r[0]&&x<=r[1]&&z>=r[2]&&z<=r[3]; }
+function walkable(x,z){ const rs=state.inside?WALK_IN:WALK_OUT; return rs.some(r=>inRect(r,x,z)); }
+function dist2(x1,z1,x2,z2){ const dx=x1-x2, dz=z1-z2; return dx*dx+dz*dz; }
+
+/* ---------- AVATAR ---------- */
+function buildAvatar(cfg){
+  const g=new THREE.Group();
+  const st=AV_STYLES.find(s=>s.id===cfg.style)||AV_STYLES[0];
+  const coat=cfg.coat||st.coat, skin=SKINS[cfg.skin!=null?cfg.skin:0], accent=cfg.accent||'#d9aa63';
+  const parts={};
+  const wide=st.coatLen==='wide'?1.18:1;
+  /* ben */
+  const legG=new THREE.CylinderGeometry(.085,.075,.82,8); legG.translate(0,-.41,0);
+  const legM=M.lam('#232838');
+  parts.legL=new THREE.Mesh(legG,legM); parts.legL.position.set(-.11,.86,0);
+  parts.legR=new THREE.Mesh(legG,legM); parts.legR.position.set(.11,.86,0);
+  g.add(parts.legL,parts.legR);
+  /* torso/rock */
+  const torso=new THREE.Mesh(new THREE.CylinderGeometry(.17*wide,.225*wide,.62,10),M.lam(coat));
+  torso.position.y=1.17; g.add(torso);
+  if(st.coatLen==='long'||st.coatLen==='wide'){
+    const skirt=new THREE.Mesh(new THREE.CylinderGeometry(.225*wide,.29*wide,.5,10),M.lam(coat));
+    skirt.position.y=.63; g.add(skirt);
+  }
+  /* armar */
+  const armG=new THREE.CylinderGeometry(.055,.06,.6,8); armG.translate(0,-.3,0);
+  const armM=M.lam(coat);
+  parts.armL=new THREE.Mesh(armG,armM); parts.armL.position.set(-.27*wide,1.46,0); parts.armL.rotation.z=.1;
+  parts.armR=new THREE.Mesh(armG,armM); parts.armR.position.set(.27*wide,1.46,0); parts.armR.rotation.z=-.1;
+  g.add(parts.armL,parts.armR);
+  /* halsduk = accent */
+  const scarf=new THREE.Mesh(new THREE.TorusGeometry(.155,.055,8,16),M.lam(accent));
+  scarf.position.y=1.5; scarf.rotation.x=Math.PI/2.15; g.add(scarf);
+  /* huvud + hår */
+  const head=new THREE.Mesh(new THREE.SphereGeometry(.155,12,10),M.lam(skin));
+  head.position.y=1.66; g.add(head); parts.head=head;
+  const hairC=['#2a2320','#4a3a2c','#151312','#5c4a38'][cfg.skin%4];
+  if(st.hair==='cap'){
+    const cap=new THREE.Mesh(new THREE.CylinderGeometry(.16,.165,.09,10),M.lam(accent));
+    cap.position.y=1.78; g.add(cap);
+    box(g,.16,.03,.14,M.lam(accent),0,1.75,.17);
+  } else if(st.hair==='long'){
+    const h1=new THREE.Mesh(new THREE.SphereGeometry(.165,10,8),M.lam(hairC));
+    h1.position.set(0,1.72,-.02); h1.scale.set(1,.8,1.05); g.add(h1);
+    const h2=new THREE.Mesh(new THREE.CylinderGeometry(.13,.09,.35,8),M.lam(hairC));
+    h2.position.set(0,1.5,-.12); g.add(h2);
+  } else {
+    const h1=new THREE.Mesh(new THREE.SphereGeometry(.16,10,8),M.lam(hairC));
+    h1.position.set(0,1.73,-.015); h1.scale.set(1,.62,1); g.add(h1);
+  }
+  /* signalmärke */
+  if(cfg.signal){
+    const b=badgeSprite(cfg.signal); b.position.y=2.18; g.add(b); parts.badge=b;
+  }
+  g.userData.parts=parts;
+  return g;
+}
+function setBadge(avatar, signalId, visible=true){
+  const p=avatar.userData.parts;
+  if(p.badge){ avatar.remove(p.badge); p.badge=null; }
+  if(signalId && visible){ const b=badgeSprite(signalId); b.position.y=2.18; avatar.add(b); p.badge=b; }
+}
+function animAvatar(avatar, dt, moving, speed, waveT){
+  const p=avatar.userData.parts; if(!p) return;
+  avatar.userData.ph=(avatar.userData.ph||Math.random()*7)+dt*(moving?speed*3.2:1.4);
+  const ph=avatar.userData.ph;
+  const amp=moving?.55:.03;
+  p.legL.rotation.x=Math.sin(ph)*amp; p.legR.rotation.x=-Math.sin(ph)*amp;
+  p.armL.rotation.x=-Math.sin(ph)*amp*.8; 
+  if(waveT>0){ p.armR.rotation.x=0;
+    p.armR.rotation.z=-2.6+Math.sin(waveT*14)*.35; }
+  else { p.armR.rotation.z=-.1; p.armR.rotation.x=Math.sin(ph)*amp*.8; }
+  p.head.rotation.y=Math.sin(ph*.25)*.12*(moving?0:1);
+}
+
+/* ---------- NPC:er ---------- */
+const npcs=[]; /* ambient */
+const demoNpcs=[];
+(function spawnAmbient(){
+  const routes=[
+    ()=>({x:(Math.random()<.5?-1:1)*(1.5+Math.random()*4), z0:2, z1:160}),
+    ()=>({x:(Math.random()<.5?-1:1)*(1+Math.random()*4.5), z0:164, z1:210}),
+  ];
+  for(let i=0;i<17;i++){
+    const r=routes[i<12?0:1]();
+    const dir=Math.random()<.5?1:-1;
+    const cfg={style:AV_STYLES[i%3].id, skin:i%4, accent:'#5a6478',
+      coat:['#3a4356','#4a3f36','#333a4a','#4e4438','#2e3644','#54483e'][i%6]};
+    const a=buildAvatar(cfg);
+    a.position.set(r.x, 0, r.z0+Math.random()*(r.z1-r.z0));
+    world.add(a);
+    npcs.push({g:a, x:r.x, z0:r.z0, z1:r.z1, dir, sp:.9+Math.random()*.7, pauseT:0});
+  }
+  /* stilla grupper: två som möts, någon som väntar vid Svampen */
+  const pairs=[[ -2.5,178, .5],[ -1.6,178.6,-2.6],[ 4,-6, 2.2],[ 5,-5.4,-1.0],[498,196,1.2],[499.1,196.5,-1.9]];
+  pairs.forEach((p,i)=>{
+    const a=buildAvatar({style:AV_STYLES[(i+1)%3].id, skin:(i+2)%4, coat:'#3e4454'});
+    a.position.set(p[0],0,p[1]); a.rotation.y=p[2];
+    (p[0]>400?interior:world).add(a);
+    npcs.push({g:a, idle:true});
+  });
+})();
+(function spawnDemos(){
+  DEMOS.forEach(d=>{
+    const a=buildAvatar({style:d.style, skin:d.skin, accent:d.accent, signal:d.signal});
+    a.position.set(d.pos[0],d.pos[1],d.pos[2]); a.rotation.y=d.face;
+    (d.area==='in'?interior:world).add(a);
+    demoNpcs.push({d, g:a, waveT:0, home:[...d.pos], wt:Math.random()*6});
+  });
+})();
+
+/* ---------- PLAYER ---------- */
+let player=null;
+const SPAWN_OUT=[0,0,-14], SPAWN_IN=[IN.cx,0,IN.z0+4];
+function makePlayer(){
+  if(player){ (state.inside?interior:world).remove(player.group); }
+  const p=state.profile;
+  const g=buildAvatar({style:p.style, skin:p.skin, accent:p.accent,
+    signal:(p.visibility==='anon'||p.visibility==='off')?null:p.signal});
+  const sp=state.inside?SPAWN_IN:SPAWN_OUT;
+  const old=player?player.group.position:null;
+  g.position.set(old?old.x:sp[0],0,old?old.z:sp[2]);
+  g.rotation.y=player?player.group.rotation.y:Math.PI;
+  (state.inside?interior:world).add(g);
+  player={group:g, waveT:0, moving:false, speed:0};
+}
+
+/* ---------- INPUT ---------- */
+const keys={};
+addEventListener('keydown',e=>{
+  if(e.target.tagName==='INPUT') return;
+  keys[e.code]=true;
+  if(e.code==='KeyE'||e.code==='Enter'){ if(currentPrompt) currentPrompt.primary(); }
+  if(e.code==='KeyM') toggleMute();
+  if(e.code==='KeyH') openHelp();
+  if(e.code==='KeyR') resetPos();
+  if(e.code==='Escape') closePanel();
+});
+addEventListener('keyup',e=>keys[e.code]=false);
+let cam={yaw:Math.PI, pitch:.28, dist:6.2};
+let dragging=false, lx=0, ly=0;
+canvas.addEventListener('pointerdown',e=>{ if(state.mobile) return; dragging=true; lx=e.clientX; ly=e.clientY; });
+addEventListener('pointermove',e=>{ if(!dragging) return;
+  cam.yaw-=(e.clientX-lx)*.005; cam.pitch=Math.min(.9,Math.max(-.1,cam.pitch+(e.clientY-ly)*.004));
+  lx=e.clientX; ly=e.clientY; });
+addEventListener('pointerup',()=>dragging=false);
+canvas.addEventListener('wheel',e=>{ cam.dist=Math.min(10,Math.max(3.4,cam.dist+e.deltaY*.004)); },{passive:true});
+
+/* touch: joystick + look */
+const joy={active:false,dx:0,dy:0};
+if(state.mobile){
+  document.getElementById('joyZone').style.display='block';
+  document.getElementById('lookZone').style.display='block';
+  const jz=document.getElementById('joyZone'), jb=document.getElementById('joyBase'), jk=document.getElementById('joyKnob');
+  let jid=null, ox=0, oy=0;
+  jz.addEventListener('touchstart',e=>{ const t=e.changedTouches[0]; jid=t.identifier;
+    ox=t.clientX; oy=t.clientY; joy.active=true;
+    jb.style.display=jk.style.display='block';
+    jb.style.left=(ox-55)+'px'; jb.style.top=(oy-55)+'px';
+    jk.style.left=(ox-24)+'px'; jk.style.top=(oy-24)+'px'; e.preventDefault(); },{passive:false});
+  jz.addEventListener('touchmove',e=>{ for(const t of e.changedTouches){ if(t.identifier!==jid) continue;
+    let dx=t.clientX-ox, dy=t.clientY-oy; const l=Math.hypot(dx,dy), max=52;
+    if(l>max){ dx*=max/l; dy*=max/l; }
+    joy.dx=dx/max; joy.dy=dy/max;
+    jk.style.left=(ox+dx-24)+'px'; jk.style.top=(oy+dy-24)+'px'; } e.preventDefault(); },{passive:false});
+  const jend=e=>{ for(const t of e.changedTouches){ if(t.identifier!==jid) continue;
+    joy.active=false; joy.dx=joy.dy=0; jid=null; jb.style.display=jk.style.display='none'; } };
+  jz.addEventListener('touchend',jend); jz.addEventListener('touchcancel',jend);
+  const lz=document.getElementById('lookZone'); let lid=null, plx=0, ply=0;
+  lz.addEventListener('touchstart',e=>{ const t=e.changedTouches[0]; lid=t.identifier; plx=t.clientX; ply=t.clientY; },{passive:true});
+  lz.addEventListener('touchmove',e=>{ for(const t of e.changedTouches){ if(t.identifier!==lid) continue;
+    cam.yaw-=(t.clientX-plx)*.006; cam.pitch=Math.min(.9,Math.max(-.1,cam.pitch+(t.clientY-ply)*.005));
+    plx=t.clientX; ply=t.clientY; } },{passive:true});
+  lz.addEventListener('touchend',()=>{lid=null;});
+}
+
+/* ---------- AUDIO ---------- */
+const audio={ctx:null, master:null, pad:null, padG:null, hum:null, humG:null, inG:null, stepT:0};
+function initAudio(){
+  if(audio.ctx) return;
+  try{
+    const C=new (window.AudioContext||window.webkitAudioContext)();
+    audio.ctx=C; audio.master=C.createGain(); audio.master.gain.value=state.muted?0:.9;
+    audio.master.connect(C.destination);
+    /* stadsbrus: filtrerat brus */
+    const len=C.sampleRate*2, buf=C.createBuffer(1,len,C.sampleRate), d=buf.getChannelData(0);
+    let last=0; for(let i=0;i<len;i++){ const w=Math.random()*2-1; last=(last+.02*w)/1.02; d[i]=last*3.2; }
+    const src=C.createBufferSource(); src.buffer=buf; src.loop=true;
+    const lp=C.createBiquadFilter(); lp.type='lowpass'; lp.frequency.value=320;
+    audio.humG=C.createGain(); audio.humG.gain.value=.05;
+    src.connect(lp).connect(audio.humG).connect(audio.master); src.start();
+    /* mjuk pad som stiger mot Stureplan */
+    audio.padG=C.createGain(); audio.padG.gain.value=0; audio.padG.connect(audio.master);
+    [110, 164.8, 138.6, 220].forEach((f,i)=>{
+      const o=C.createOscillator(); o.type='triangle'; o.frequency.value=f;
+      o.detune.value=(i-1.5)*4;
+      const g=C.createGain(); g.gain.value=[.012,.008,.007,.004][i];
+      o.connect(g).connect(audio.padG); o.start();
+    });
+  }catch(e){}
+}
+function footstep(){
+  const C=audio.ctx; if(!C||state.muted) return;
+  const o=C.createBufferSource(); const len=C.sampleRate*.09;
+  const b=C.createBuffer(1,len,C.sampleRate), d=b.getChannelData(0);
+  for(let i=0;i<len;i++) d[i]=(Math.random()*2-1)*Math.pow(1-i/len,2.2);
+  o.buffer=b;
+  const f=C.createBiquadFilter();
+  f.type= state.inside?'highpass':'bandpass';
+  f.frequency.value= state.inside? 900 : 300;
+  const g=C.createGain(); g.gain.value= state.inside? .12 : .09;
+  o.connect(f).connect(g).connect(audio.master); o.start();
+}
+function chime(shared){
+  const C=audio.ctx; if(!C||state.muted) return;
+  [523.25, shared?659.25:587.33].forEach((f,i)=>{
+    const o=C.createOscillator(); o.type='sine'; o.frequency.value=f;
+    const g=C.createGain(); g.gain.setValueAtTime(0,C.currentTime+i*.12);
+    g.gain.linearRampToValueAtTime(.08,C.currentTime+i*.12+.02);
+    g.gain.exponentialRampToValueAtTime(.0001,C.currentTime+i*.12+.8);
+    o.connect(g).connect(audio.master); o.start(C.currentTime+i*.12); o.stop(C.currentTime+i*.12+.9);
+  });
+}
+function toggleMute(){ state.muted=!state.muted;
+  if(audio.master) audio.master.gain.linearRampToValueAtTime(state.muted?0:.9, audio.ctx.currentTime+.2);
+  document.getElementById('btnMute').textContent=state.muted?'∅':'♪';
+  toast(state.muted?'Ljud av':'Ljud på');
+}
+
+/* ---------- UI CORE ---------- */
+const ui=document.getElementById('uiRoot');
+let panelEl=null;
+function panel(html, opts={}){
+  closePanel();
+  panelEl=document.createElement('div'); panelEl.className='overlay';
+  panelEl.innerHTML=`<div class="card">${html}</div>`;
+  if(!opts.modal) panelEl.addEventListener('click',e=>{ if(e.target===panelEl) closePanel(); });
+  ui.appendChild(panelEl); return panelEl;
+}
+function closePanel(){ if(panelEl){ panelEl.remove(); panelEl=null; } }
+let toastT=null;
+function toast(msg,ms=2600){
+  const t=document.getElementById('toast'); t.innerHTML=msg; t.style.opacity=1;
+  clearTimeout(toastT); toastT=setTimeout(()=>t.style.opacity=0,ms);
+}
+function sigChipHTML(s,on,cls=''){
+  return `<button class="chip ${cls} ${on?'on':''}" data-sig="${s.id}" style="--chipc:${s.color}">
+    ${iconSVG(s.icon,s.color)} ${s.label}</button>`;
+}
+function allInterests(){ const p=state.profile;
+  return SIGNALS.concat(p&&p.customs?p.customs:[]); }
+function refreshHUD(){
+  const p=state.profile; if(!p) return;
+  const s=sig(p.signal);
+  document.getElementById('sigNow').innerHTML=
+    `${iconSVG(s.icon,s.color,15)} <span>${s.label}</span>`;
+  if(player) setBadge(player.group, p.signal, !(p.visibility==='anon'||p.visibility==='off'));
+  if(interior.userData.studioBadge){
+    const nb=badgeSprite(p.signal); nb.position.copy(interior.userData.studioBadge.position);
+    interior.remove(interior.userData.studioBadge); interior.add(nb); interior.userData.studioBadge=nb;
+  }
+  saveProfile();
+}
+
+/* ---------- ONBOARDING ---------- */
+function startOnboarding(returning){
+  if(returning){
+    const p=state.profile, s=sig(p.signal);
+    panel(`
+      <div class="eyebrow">Välkommen tillbaka</div>
+      <h2>${p.name}</h2>
+      <p class="sub">Din profil finns kvar lokalt i den här webbläsaren.</p>
+      <div class="sigline">${iconSVG(s.icon,s.color)} Aktiv signal: <b style="color:var(--text)">${s.label}</b></div>
+      <hr class="s">
+      <div class="row">
+        <button class="primary grow" id="obGo">Stig in i staden</button>
+        <button class="ghost" id="obEdit">Ändra profil</button>
+      </div>`, {modal:true});
+    panelEl.querySelector('#obGo').onclick=()=>{ closePanel(); enterCity(); };
+    panelEl.querySelector('#obEdit').onclick=()=>obStep1(true);
+    return;
+  }
+  state.profile=defaultProfile();
+  obStep1(false);
+}
+function obStep1(editing){
+  const p=state.profile;
+  panel(`
+    <div class="eyebrow">Steg 1 av 3 · Identitet</div>
+    <h2>Vem går genom staden?</h2>
+    <p class="sub">Blåtimmen har lagt sig över Norrmalmstorg. Välj hur du vill vara här.</p>
+    <label class="f">Visningsnamn</label>
+    <input type="text" id="obName" maxlength="24" placeholder="T.ex. Patrik" value="${p.name||''}">
+    <hr class="s">
+    <div class="row" style="flex-direction:column;gap:8px;">
+      <button class="primary" id="obGuest">Fortsätt som gäst</button>
+      <button class="ghost" id="obGoogle">Logga in med Google</button>
+      <button class="ghost" id="obFb">Logga in med Facebook</button>
+      <button class="ghost" id="obMail">Skapa konto med e-post</button>
+    </div>
+    <p class="sub" style="margin-top:14px;margin-bottom:0;font-size:12px;">
+      Gästprofilen sparas endast lokalt i din webbläsare. Ingenting skickas någonstans.</p>`, {modal:true});
+  const nameEl=panelEl.querySelector('#obName');
+  const goNext=(account)=>{
+    const n=nameEl.value.trim();
+    if(!n){ nameEl.focus(); nameEl.style.outline='2px solid var(--danger)'; return; }
+    p.name=n; p.account=account; obStep2(editing);
+  };
+  panelEl.querySelector('#obGuest').onclick=()=>goNext('guest');
+  panelEl.querySelector('#obGoogle').onclick=()=>externalInfo('Google', nameEl);
+  panelEl.querySelector('#obFb').onclick=()=>externalInfo('Facebook', nameEl);
+  panelEl.querySelector('#obMail').onclick=()=>{
+    const n=nameEl.value.trim(); if(!n){ nameEl.focus(); return; }
+    panel(`
+      <div class="eyebrow">Konto med e-post</div>
+      <h2>Nästan ett konto</h2>
+      <p class="sub">I den här första versionen sparas kontot endast lokalt i din webbläsare —
+      det finns ingen server ännu. E-posten används inte till något och skickas ingenstans.</p>
+      <label class="f">E-post</label>
+      <input type="email" id="obEmail" placeholder="namn@exempel.se">
+      <hr class="s">
+      <div class="row"><button class="primary grow" id="obMailGo">Skapa lokal profil</button>
+      <button class="ghost" id="obBack">Tillbaka</button></div>`, {modal:true});
+    panelEl.querySelector('#obMailGo').onclick=()=>{
+      p.name=n; p.account='email-local';
+      p.email=panelEl.querySelector('#obEmail').value.trim(); obStep2(editing); };
+    panelEl.querySelector('#obBack').onclick=()=>obStep1(editing);
+  };
+  setTimeout(()=>nameEl.focus(),50);
+}
+function externalInfo(provider, nameEl){
+  const n=nameEl?nameEl.value.trim():'';
+  panel(`
+    <div class="eyebrow">${provider}-inloggning</div>
+    <h2>Inte ansluten ännu</h2>
+    <p class="sub">Inloggning med ${provider} ingår i produktvisionen — då kan namn och profilbild
+    hämtas från kontot, och två personer som båda använder STHLM SIGNAL kan känna igen varandra i staden.</p>
+    <p class="sub">Den här versionen körs utan server och utan API-nycklar, så en riktig
+    ${provider}-inloggning kan inte genomföras. Vi låtsas inte att den lyckades.</p>
+    <hr class="s">
+    <button class="primary" id="extGuest" style="width:100%">Fortsätt som gäst i stället</button>`, {modal:true});
+  panelEl.querySelector('#extGuest').onclick=()=>{
+    if(n) state.profile.name=n;
+    if(!state.profile.name){ obStep1(false); return; }
+    state.profile.account='guest'; obStep2(false);
+  };
+}
+function stylePreview(st, accent){
+  const c=document.createElement('canvas'); c.width=72; c.height=96; const x=c.getContext('2d');
+  x.fillStyle='#111a2e'; x.fillRect(0,0,72,96);
+  x.fillStyle='#e8c4a0'; x.beginPath(); x.arc(36,26,9,0,7); x.fill();
+  x.fillStyle=st.coat;
+  const w=st.coatLen==='wide'?30:22, h=st.coatLen==='short'?26:38;
+  x.fillRect(36-w/2,36,w,h);
+  x.fillStyle='#232838'; x.fillRect(28,36+h,6,90-36-h-4); x.fillRect(38,36+h,6,90-36-h-4);
+  x.fillStyle=accent; x.fillRect(36-w/2,36,w,5);
+  if(st.hair==='cap'){ x.fillStyle=accent; x.fillRect(25,14,22,5); }
+  else { x.fillStyle='#2a2320'; x.beginPath(); x.arc(36,22,9.5,Math.PI,0); x.fill(); }
+  return c;
+}
+function obStep2(editing){
+  const p=state.profile;
+  panel(`
+    <div class="eyebrow">Steg 2 av 3 · Avatar</div>
+    <h2>Din gestalt i Stockholm</h2>
+    <p class="sub">Tre karaktärer, en accentfärg. Halsduken bär din färg genom staden.</p>
+    <div class="styleCards" id="obStyles"></div>
+    <label class="f">Accentfärg</label>
+    <div class="swatches" id="obAcc"></div>
+    <label class="f">Hudton</label>
+    <div class="swatches" id="obSkin"></div>
+    <div class="row"><button class="ghost" id="ob2Back">Tillbaka</button>
+    <button class="primary grow" id="ob2Next">Vidare</button></div>`, {modal:true});
+  const stEl=panelEl.querySelector('#obStyles');
+  function renderStyles(){
+    stEl.innerHTML='';
+    AV_STYLES.forEach(st=>{
+      const d=document.createElement('button'); d.className='styleCard'+(p.style===st.id?' on':'');
+      d.appendChild(stylePreview(st,p.accent));
+      d.insertAdjacentHTML('beforeend',`<div><b style="color:var(--text)">${st.label}</b><br>${st.desc}</div>`);
+      d.onclick=()=>{ p.style=st.id; renderStyles(); };
+      stEl.appendChild(d);
+    });
+  }
+  const accEl=panelEl.querySelector('#obAcc');
+  function renderAcc(){ accEl.innerHTML='';
+    ACCENTS.forEach(a=>{ const b=document.createElement('button');
+      b.className='sw'+(p.accent===a?' on':''); b.style.background=a;
+      b.onclick=()=>{ p.accent=a; renderAcc(); renderStyles(); }; accEl.appendChild(b); }); }
+  const skEl=panelEl.querySelector('#obSkin');
+  function renderSkin(){ skEl.innerHTML='';
+    SKINS.forEach((a,i)=>{ const b=document.createElement('button');
+      b.className='sw'+(p.skin===i?' on':''); b.style.background=a;
+      b.onclick=()=>{ p.skin=i; renderSkin(); }; skEl.appendChild(b); }); }
+  renderStyles(); renderAcc(); renderSkin();
+  panelEl.querySelector('#ob2Back').onclick=()=>obStep1(editing);
+  panelEl.querySelector('#ob2Next').onclick=()=>obStep3(editing);
+}
+function obStep3(editing){
+  const p=state.profile;
+  panel(`
+    <div class="eyebrow">Steg 3 av 3 · City Signals</div>
+    <h2>Vad sänder du ikväll?</h2>
+    <p class="sub">Välj dina intressen — men bara <b>en</b> signal lyser åt gången.
+    Den syns som ett märke ovanför dig och berättar vad du är öppen för just nu.</p>
+    <label class="f">Dina intressen</label>
+    <div class="chips" id="obInt"></div>
+    <div class="row" style="margin-top:6px">
+      <input type="text" id="obCustom" placeholder="Eget intresse, t.ex. pimpelfiske" style="flex:1">
+      <button class="ghost" id="obAddC">Lägg till</button>
+    </div>
+    <label class="f">Aktiv signal</label>
+    <div class="chips" id="obSig"></div>
+    <label class="f">Synlighet</label>
+    <div class="chips" id="obVis"></div>
+    <hr class="s">
+    <div class="row"><button class="ghost" id="ob3Back">Tillbaka</button>
+    <button class="primary grow" id="ob3Go">${editing?'Spara':'Stig in i staden'}</button></div>`, {modal:true});
+  const intEl=panelEl.querySelector('#obInt'), sigEl=panelEl.querySelector('#obSig');
+  function render(){
+    intEl.innerHTML=allInterests().map(s=>sigChipHTML(s,p.interests.includes(s.id))).join('');
+    intEl.querySelectorAll('.chip').forEach(c=>c.onclick=()=>{
+      const id=c.dataset.sig;
+      if(p.interests.includes(id)){ p.interests=p.interests.filter(x=>x!==id);
+        if(p.signal===id) p.signal=p.interests[0]||'walk'; }
+      else p.interests.push(id);
+      render();
+    });
+    const pool=p.interests.length?p.interests.map(sig):[sig('walk')];
+    sigEl.innerHTML=pool.map(s=>sigChipHTML(s,p.signal===s.id,'sig')).join('');
+    sigEl.querySelectorAll('.chip').forEach(c=>c.onclick=()=>{ p.signal=c.dataset.sig; render(); });
+    const vis=[['all','Synlig för alla'],['conn','Endast kontakter'],['anon','Anonym avatar'],['off','Social synlighet av']];
+    const vEl=panelEl.querySelector('#obVis');
+    vEl.innerHTML=vis.map(v=>`<button class="chip ${p.visibility===v[0]?'on':''}" data-v="${v[0]}">${v[1]}</button>`).join('');
+    vEl.querySelectorAll('.chip').forEach(c=>c.onclick=()=>{ p.visibility=c.dataset.v; render(); });
+  }
+  render();
+  panelEl.querySelector('#obAddC').onclick=()=>{
+    const v=panelEl.querySelector('#obCustom').value.trim(); if(!v) return;
+    const id='c_'+v.toLowerCase().replace(/[^a-zåäö0-9]/g,'').slice(0,16);
+    if(!p.customs.find(c=>c.id===id)){
+      p.customs.push({id, label:v, color:'#d66aa8', icon:'spark'});
+      p.interests.push(id);
+    }
+    panelEl.querySelector('#obCustom').value=''; render();
+  };
+  panelEl.querySelector('#ob3Back').onclick=()=>obStep2(editing);
+  panelEl.querySelector('#ob3Go').onclick=()=>{
+    if(!p.interests.length) p.interests=['walk'];
+    if(!p.interests.includes(p.signal)) p.signal=p.interests[0];
+    saveProfile(); closePanel();
+    if(editing){ makePlayer(); refreshHUD(); toast('Profil uppdaterad'); if(!state.playing) enterCity(); }
+    else enterCity();
+  };
+}
+function enterCity(){
+  makePlayer(); refreshHUD();
+  state.playing=true;
+  toast(`God kväll, <b>${state.profile.name}</b>. Biblioteksgatan väntar norrut. ✨`, 4200);
+}
+
+/* ---------- SIGNAL SNABBVÄXLARE / HJÄLP ---------- */
+document.getElementById('sigNow').onclick=()=>{
+  if(!state.profile) return;
+  const p=state.profile;
+  panel(`
+    <div class="eyebrow">City Signal</div>
+    <h2>Byt aktiv signal</h2>
+    <p class="sub">En signal i taget. Resten av dina intressen vilar tills du väljer dem.</p>
+    <div class="chips" id="qsSig"></div>
+    <hr class="s"><button class="ghost" id="qsEdit" style="width:100%">Öppna hela profilen</button>`);
+  const el=panelEl.querySelector('#qsSig');
+  function r(){ el.innerHTML=p.interests.map(id=>sigChipHTML(sig(id),p.signal===id,'sig')).join('');
+    el.querySelectorAll('.chip').forEach(c=>c.onclick=()=>{
+      p.signal=c.dataset.sig; refreshHUD(); r();
+      toast(`Aktiv signal: <b>${sig(p.signal).label}</b>`); }); }
+  r();
+  panelEl.querySelector('#qsEdit').onclick=()=>obStep1(true);
+};
+function openHelp(){
+  panel(`
+    <div class="eyebrow">Hjälp</div>
+    <h2>Att röra sig i staden</h2>
+    <div class="helpk">
+      ${state.mobile
+        ? `<b>Vänster</b><span>Styrspak — gå</span>
+           <b>Höger</b><span>Dra — se dig omkring</span>
+           <b>Knappar</b><span>Handlingar visas när något är nära</span>`
+        : `<b>W A S D</b><span>Gå (piltangenter fungerar också)</span>
+           <b>Skift</b><span>Skynda dig</span>
+           <b>Mus</b><span>Dra för att se dig omkring, skrolla för avstånd</span>
+           <b>E</b><span>Den föreslagna handlingen</span>
+           <b>R</b><span>Återställ position</span>
+           <b>M</b><span>Ljud av och på</span>`}
+    </div>
+    <hr class="s">
+    <p class="sub" style="margin:0">Personer med ett <b>märke</b> ovanför huvudet sänder en City Signal.
+    Gå nära och välj själv om du vill vinka eller se profilen — inget öppnas automatiskt.
+    Gestalter utan märke är stadens egna invånare. Profiler märkta <b>DEMO</b> är
+    demonstrationsprofiler, inte riktiga användare.</p>`);
+}
+document.getElementById('btnHelp').onclick=openHelp;
+document.getElementById('btnMute').onclick=toggleMute;
+document.getElementById('btnReset').onclick=resetPos;
+document.getElementById('btnExit').onclick=()=>{ if(state.inside) doorTransition(false); };
+function resetPos(){
+  if(!player) return;
+  const s=state.inside?SPAWN_IN:SPAWN_OUT;
+  player.group.position.set(s[0],0,s[2]); cam.yaw=state.inside?Math.PI:Math.PI;
+  toast('Position återställd');
+}
+
+/* ---------- INTERAKTIONER ---------- */
+let currentPrompt=null;
+const promptEl=document.getElementById('prompt');
+function showPrompt(title, btns){
+  promptEl.style.display='flex';
+  document.getElementById('promptTitle').innerHTML=title;
+  const bEl=document.getElementById('promptBtns'); bEl.innerHTML='';
+  btns.forEach((b,i)=>{ const el=document.createElement('button');
+    if(i===0) el.className='primary';
+    el.innerHTML=b.label+(i===0&&!state.mobile?' <span style="opacity:.6;font-size:11px">E</span>':'');
+    el.onclick=b.fn; bEl.appendChild(el); });
+  currentPrompt={primary:btns[0].fn};
+}
+function hidePrompt(){ promptEl.style.display='none'; currentPrompt=null; }
+
+function sharedInterests(d){
+  const p=state.profile;
+  return d.interests.filter(i=>p.interests.includes(i));
+}
+function waveAt(n){
+  player.waveT=1.6; n.waveT=2.0;
+  const sh=sharedInterests(n.d);
+  chime(sh.length>0);
+  state.waved[n.d.id]=true;
+  if(sh.length) toast(`${n.d.name} vinkar tillbaka — ni delar <b>${sig(sh[0]).label.toLowerCase()}</b>!`);
+  else toast(`${n.d.name} vinkar glatt tillbaka.`);
+}
+function openProfileCard(n){
+  const d=n.d, p=state.profile;
+  const sh=sharedInterests(d);
+  const s=sig(d.signal);
+  const conn=state.connections.includes(d.id);
+  panel(`
+    <div class="pcHead">
+      <div id="pcPortrait"></div>
+      <div>
+        <h2 style="font-size:19px">${d.name}<span class="badgeDemo">DEMO</span></h2>
+        <div class="sigline" style="margin:2px 0 0">${iconSVG(s.icon,s.color)} ${s.label}</div>
+      </div>
+    </div>
+    <p class="sub" style="margin-bottom:10px">${d.bio}</p>
+    <div class="chips">${d.interests.map(i=>{const si=sig(i);
+      return `<span class="chip ${sh.includes(i)?'on':''}" style="--chipc:${si.color};cursor:default">
+        ${iconSVG(si.icon,si.color)} ${si.label}</span>`;}).join('')}</div>
+    ${sh.length?`<div class="shared">${iconSVG('spark','#d9aa63')}
+      Ni delar ${sh.length===1?'ett intresse':sh.length+' intressen'}:
+      <b>${sh.map(i=>sig(i).label).join(', ')}</b></div>`
+      :`<p class="sub" style="margin:10px 0">Inga gemensamma intressen ännu — men signaler kan bytas.</p>`}
+    <p class="sub" style="font-size:11.5px;margin:8px 0 14px">Demonstrationsprofil som visar hur möten
+    fungerar. Riktiga användare kräver anslutna konton i en framtida version.</p>
+    <div class="row">
+      <button class="primary" id="pcWave">Vinka 👋</button>
+      <button class="ghost grow" id="pcConn">${conn?'Intresse skickat ✓':'Visa intresse'}</button>
+      <button class="ghost" id="pcClose">Stäng</button>
+    </div>`);
+  panelEl.querySelector('#pcPortrait').appendChild(portrait(d.name,d.accent,64));
+  panelEl.querySelector('#pcPortrait').firstChild.style.cssText='border-radius:18px';
+  panelEl.querySelector('#pcWave').onclick=()=>{ closePanel(); waveAt(n); };
+  panelEl.querySelector('#pcClose').onclick=closePanel;
+  panelEl.querySelector('#pcConn').onclick=()=>{
+    if(!state.connections.includes(d.id)){ state.connections.push(d.id); saveProfile();
+      closePanel(); toast(`Du har visat intresse för att lära känna <b>${d.name}</b>. Sparat lokalt.`); }
+  };
+}
+function openArtCard(f){
+  const a=f.art;
+  panel(`
+    <div class="eyebrow">Galleriet · Installation</div>
+    <h2>${a.title}</h2>
+    <p class="sub" style="color:var(--brass);margin-bottom:6px">${a.tag}</p>
+    <div class="artvisual" style="background:linear-gradient(120deg,hsl(${a.hue},50%,16%),hsl(${(a.hue+60)%360},60%,28%))"></div>
+    <p class="sub">${a.desc}</p>
+    <p class="sub" style="font-size:11.5px">I en framtida version kan installationen bli en portal
+    rakt in i projektet. Ikväll är den ett fönster.</p>
+    <button class="ghost" style="width:100%" id="acClose">Tillbaka till galleriet</button>`);
+  panelEl.querySelector('#acClose').onclick=closePanel;
+}
+function openSvampenPanel(){
+  const here=demoNpcs.filter(n=>n.d.area==='out' && dist2(n.g.position.x,n.g.position.z,0,186)<900);
+  panel(`
+    <div class="eyebrow">Mötesplatsen</div>
+    <h2>Vid Svampen just nu</h2>
+    <p class="sub">Stockholms mest klassiska "vi ses vid...". Här samlas signaler.</p>
+    ${here.map(n=>{const s=sig(n.d.signal);
+      return `<div class="sigline" style="color:var(--text)">${iconSVG(s.icon,s.color)}
+        <b>${n.d.name}</b><span class="badgeDemo">DEMO</span>
+        <span style="color:var(--dim)">· ${s.label}</span></div>`;}).join('')||
+      '<p class="sub">Ingen synlig just nu.</p>'}
+    <hr class="s">
+    <p class="sub" style="font-size:12px;margin:0 0 12px">Övriga gestalter på torget är stadens egna
+    invånare — de sänder inga signaler och är inte riktiga användare.</p>
+    <button class="ghost" style="width:100%" id="svSig">Byt min aktiva signal</button>`);
+  panelEl.querySelector('#svSig').onclick=()=>document.getElementById('sigNow').click();
+}
+
+/* dörr-övergångar */
+let transitioning=false;
+function doorTransition(goInside){
+  if(transitioning) return; transitioning=true; hidePrompt();
+  const fade=document.getElementById('fade');
+  fade.style.transition='opacity .7s'; fade.style.opacity=1;
+  setTimeout(()=>{
+    state.inside=goInside;
+    world.visible=!goInside; interior.visible=goInside;
+    if(goInside){
+      player.group.parent.remove(player.group); interior.add(player.group);
+      player.group.position.set(IN.cx,0,IN.z0+4); cam.yaw=Math.PI; cam.pitch=.22;
+      scene.fog.color.set(0x2a2216); scene.fog.near=20; scene.fog.far=90;
+      hemi.color.set(0xffe0b0); hemi.groundColor.set(0x2a2014); hemi.intensity=.85;
+      document.getElementById('btnExit').style.display='flex';
+      toast('Sturegallerian. Salongen till höger, Galleriet rakt fram, Signalstudion till vänster.',4600);
+    } else {
+      player.group.parent.remove(player.group); world.add(player.group);
+      player.group.position.set(-26,0,185); player.group.rotation.y=Math.PI/2; cam.yaw=-Math.PI/2; cam.pitch=.26;
+      scene.fog.color.set(0x14274a); scene.fog.near=30; scene.fog.far=230;
+      hemi.color.set(0x5a7ab8); hemi.groundColor.set(0x0c1626); hemi.intensity=1.0;
+      document.getElementById('btnExit').style.display='none';
+      toast('Tillbaka på Stureplan. Blåtimmen håller i sig.');
+    }
+    if(audio.inG!==undefined && audio.humG) audio.humG.gain.linearRampToValueAtTime(goInside?.015:.05, audio.ctx.currentTime+1);
+    setTimeout(()=>{ fade.style.opacity=0; transitioning=false; },150);
+  },720);
+}
+
+/* ---------- INTRO ---------- */
+const introEl=document.getElementById('intro');
+let introT=0; const INTRO_LEN=11;
+document.getElementById('skipBtn').onclick=endIntro;
+function endIntro(){
+  if(!state.intro) return;
+  state.intro=false; introEl.classList.remove('show');
+  setTimeout(()=>introEl.style.display='none',800);
+  const has=loadProfile();
+  startOnboarding(has);
+}
+
+/* ---------- LOOP ---------- */
+const clock=new THREE.Clock();
+let stepAcc=0;
+function tick(){
+  requestAnimationFrame(tick);
+  const dt=Math.min(clock.getDelta(),.05);
+  const t=clock.elapsedTime;
+
+  /* intro-kamera */
+  if(state.intro){
+    introT+=dt;
+    const k=Math.min(1,introT/INTRO_LEN);
+    const e=k*k*(3-2*k);
+    const ax=Math.sin(introT*.1)*20;
+    camera.position.set(
+      lerp(ax, 0, e), lerp(95, 8, e), lerp(-150, -34, e));
+    camera.lookAt(lerp(0,0,e), lerp(10,2,e), lerp(90, -10, e));
+    if(introT>INTRO_LEN) endIntro();
+  }
+
+  /* spelare */
+  if(player && state.playing && !state.intro){
+    let mx=0, mz=0;
+    if(keys.KeyW||keys.ArrowUp) mz+=1; if(keys.KeyS||keys.ArrowDown) mz-=1;
+    if(keys.KeyA||keys.ArrowLeft) mx-=1; if(keys.KeyD||keys.ArrowRight) mx+=1;
+    if(joy.active){ mx+=joy.dx; mz-=joy.dy; }
+    const l=Math.hypot(mx,mz);
+    const run=(keys.ShiftLeft||keys.ShiftRight)?1.7:1;
+    player.moving=l>.15 && !panelEl;
+    if(player.moving){
+      mx/=l; mz/=l;
+      const sp=3.1*run*Math.min(1,l*1.4);
+      player.speed=sp;
+      const wy=cam.yaw;
+      const dx=(Math.sin(wy)*mz + Math.cos(wy)*mx)*sp*dt;
+      const dz=(Math.cos(wy)*mz - Math.sin(wy)*mx)*sp*dt;
+      const px=player.group.position.x, pz=player.group.position.z;
+      let nx=px+dx, nz=pz+dz;
+      if(!walkable(nx,nz)){ if(walkable(nx,pz)) nz=pz; else if(walkable(px,nz)) nx=px; else {nx=px;nz=pz;} }
+      player.group.position.x=nx; player.group.position.z=nz;
+      const ta=Math.atan2(dx,dz);
+      let da=ta-player.group.rotation.y;
+      while(da>Math.PI)da-=Math.PI*2; while(da<-Math.PI)da+=Math.PI*2;
+      player.group.rotation.y+=da*Math.min(1,dt*10);
+      stepAcc+=sp*dt; if(stepAcc>1.1){ stepAcc=0; footstep(); }
+    } else player.speed=0;
+    player.waveT=Math.max(0,player.waveT-dt);
+    animAvatar(player.group, dt, player.moving, player.speed, player.waveT);
+
+    /* kamera följer */
+    const p=player.group.position;
+    const cy=cam.yaw, cp=cam.pitch, d=cam.dist;
+    const tx=p.x - Math.sin(cy)*Math.cos(cp)*d;
+    const tz=p.z - Math.cos(cy)*Math.cos(cp)*d;
+    const ty=1.6 + Math.sin(cp)*d;
+    camera.position.lerp(new THREE.Vector3(tx,ty,tz), Math.min(1,dt*7));
+    camera.lookAt(p.x, 1.5, p.z);
+
+    /* interaktioner: hitta närmsta */
+    updateInteractions(p);
+
+    /* ljudmix: pad stiger mot Stureplan / interiör */
+    if(audio.padG){
+      const target = state.inside ? .5 :
+        Math.max(0, Math.min(1,(p.z-110)/70))*.42;
+      audio.padG.gain.value += (target-audio.padG.gain.value)*dt*1.5;
+    }
+  }
+
+  /* NPC:er */
+  npcs.forEach(n=>{
+    if(n.idle){ animAvatar(n.g, dt, false, 0, 0); return; }
+    if(n.pauseT>0){ n.pauseT-=dt; animAvatar(n.g,dt,false,0,0); return; }
+    n.g.position.z+=n.dir*n.sp*dt;
+    n.g.rotation.y=n.dir>0?0:Math.PI;
+    if(n.g.position.z>n.z1||n.g.position.z<n.z0){ n.dir*=-1;
+      n.pauseT=1+Math.random()*3; }
+    if(Math.random()<dt*.03) n.pauseT=1+Math.random()*2;
+    animAvatar(n.g, dt, true, n.sp, 0);
+  });
+  demoNpcs.forEach(n=>{
+    n.waveT=Math.max(0,n.waveT-dt);
+    n.wt-=dt;
+    if(n.wt<0){ n.wt=4+Math.random()*5;
+      n.tgt=[n.home[0]+(Math.random()-.5)*3, n.home[2]+(Math.random()-.5)*3]; }
+    let moving=false;
+    if(n.tgt){
+      const dx=n.tgt[0]-n.g.position.x, dz=n.tgt[1]-n.g.position.z;
+      const dl=Math.hypot(dx,dz);
+      if(dl>.2){ moving=true;
+        n.g.position.x+=dx/dl*.6*dt; n.g.position.z+=dz/dl*.6*dt;
+        n.g.rotation.y=Math.atan2(dx,dz); }
+    }
+    /* vänd sig mot spelaren när nära */
+    if(player && dist2(n.g.position.x,n.g.position.z,player.group.position.x,player.group.position.z)<20){
+      const dx=player.group.position.x-n.g.position.x, dz=player.group.position.z-n.g.position.z;
+      const ta=Math.atan2(dx,dz); let da=ta-n.g.rotation.y;
+      while(da>Math.PI)da-=Math.PI*2; while(da<-Math.PI)da+=Math.PI*2;
+      n.g.rotation.y+=da*Math.min(1,dt*4); moving=false;
+    }
+    animAvatar(n.g, dt, moving, .6, n.waveT);
+  });
+
+  /* trafik */
+  traffic.forEach(tr=>{
+    tr.p=(tr.p+dt*tr.sp/Math.abs(tr.to-tr.from))%1;
+    const v=tr.from+(tr.to-tr.from)*tr.p;
+    tr.m.position.set(v, 0, tr.at);
+    tr.m.rotation.y=(tr.to>tr.from)?Math.PI/2:-Math.PI/2;
+  });
+
+  /* lyktflimmer + konst */
+  lampGlows.forEach((g,i)=>{ g.material.opacity=.5+Math.sin(t*3+i*2.3)*.06; });
+  artUpdaters.forEach(f=>f(t));
+
+  renderer.render(scene, camera);
+}
+function lerp(a,b,k){ return a+(b-a)*k; }
+
+/* interaktionsdetektering */
+let promptKey=null;
+function updateInteractions(p){
+  if(panelEl||transitioning){ if(promptKey){promptKey=null; hidePrompt();} return; }
+  let best=null, bestD=1e9;
+  const consider=(key,x,z,r,make)=>{ const d=dist2(p.x,p.z,x,z);
+    if(d<r*r && d<bestD){ bestD=d; best={key,make}; } };
+  if(!state.inside){
+    consider('door',-26.5,185,4.5,()=>showPrompt('Sturegallerians portar står öppna',
+      [{label:'Gå in', fn:()=>doorTransition(true)}]));
+    consider('svamp',0,186,4.2,()=>showPrompt('Svampen — Stockholms mötesplats',
+      [{label:'Se vilka som är här', fn:openSvampenPanel}]));
+    consider('artw',-7,54,4.5,()=>showPrompt('GALLERI NOD · Verket lyssnar på din närvaro',
+      [{label:'Betrakta', fn:()=>toast('Linjerna följer din puls — och lånar din accentfärg så länge du står kvar.')}]));
+    demoNpcs.filter(n=>n.d.area==='out').forEach(n=>{
+      const s=sig(n.d.signal);
+      consider('npc_'+n.d.id, n.g.position.x, n.g.position.z, 3.4, ()=>showPrompt(
+        `<b>${n.d.name}</b> <span class="badgeDemo">DEMO</span> · ${iconSVG(s.icon,s.color,13)} ${s.label}`,
+        [{label:'Vinka 👋', fn:()=>{waveAt(n); }},
+         {label:'Profil', fn:()=>openProfileCard(n)}]));
+    });
+  } else {
+    consider('exit',IN.cx,IN.z0+2.5,3.6,()=>showPrompt('Portarna mot Stureplan',
+      [{label:'Gå ut', fn:()=>doorTransition(false)}]));
+    consider('studio',IN.cx-16,166,3.4,()=>showPrompt('Signalstudion — spegel, signaler, identitet',
+      [{label:'Öppna studion', fn:()=>obStep1(true)}]));
+    artFrames.forEach(f=>consider('art_'+f.art.id, f.x, f.z, 3.2,
+      ()=>showPrompt(`<b>${f.art.title}</b> · ${f.art.tag}`,
+        [{label:'Läs om verket', fn:()=>openArtCard(f)}])));
+    demoNpcs.filter(n=>n.d.area==='in').forEach(n=>{
+      const s=sig(n.d.signal);
+      consider('npc_'+n.d.id, n.g.position.x, n.g.position.z, 3.4, ()=>showPrompt(
+        `<b>${n.d.name}</b> <span class="badgeDemo">DEMO</span> · ${iconSVG(s.icon,s.color,13)} ${s.label}`,
+        [{label:'Vinka 👋', fn:()=>{waveAt(n);}},
+         {label:'Profil', fn:()=>openProfileCard(n)}]));
+    });
+  }
+  if(best){ if(best.key!==promptKey){ promptKey=best.key; best.make(); } }
+  else if(promptKey){ promptKey=null; hidePrompt(); }
+}
+
+/* ---------- BOOT ---------- */
+function resize(){
+  renderer.setSize(innerWidth, innerHeight, false);
+  camera.aspect=innerWidth/innerHeight; camera.updateProjectionMatrix();
+}
+addEventListener('resize',resize); resize();
+
+/* första gest: starta ljud */
+const gesture=()=>{ initAudio(); removeEventListener('pointerdown',gesture); removeEventListener('keydown',gesture); };
+addEventListener('pointerdown',gesture); addEventListener('keydown',gesture);
+
+setTimeout(()=>{ document.getElementById('fade').style.opacity=0; introEl.classList.add('show'); }, 300);
+tick();
+</script>
+</body>
+</html>
