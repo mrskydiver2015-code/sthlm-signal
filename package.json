@@ -1,0 +1,6 @@
+{
+  "name": "sthlm-signal",
+  "private": true,
+  "scripts": { "test": "node tests/smoke.cjs && node tests/urban.cjs", "test:budget": "node tests/render-budget.cjs" },
+  "devDependencies": { "playwright": "1.62.1" }
+}
