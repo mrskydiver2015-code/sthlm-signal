@@ -42,7 +42,7 @@ Implemented limits:
 - One 512² mobile / 1024² desktop outdoor shadow map; no NPC shadows on mobile. Pixel ratio remains capped at 1.25 / 2 respectively. Environment lighting is prefiltered once, with no real-time reflection capture or postprocessing.
 - Existing gallery textures update at 12 Hz only near the active gallery. Hidden exterior traffic and inactive-room NPC animation are skipped.
 
-`tests/render-budget.cjs` compares a seeded view at (0, 0, 30), looking along Biblioteksgatan, using an 800×600 viewport. It reports draw calls, triangles, allocated geometries and unique source texture pixels. Source texture pixels are not a claim about measured GPU memory. The baseline can be supplied with `STHLM_BASELINE`; outputs are written to ignored `test-results/render-budget.json`.
+The current hard regression gate is documented in README.md. It includes shadow passes, fixed simulation time, desktop/mobile profiles, and fails above 400 calls. The earlier baseline-comparison mode has been replaced.
 
 A seeded comparison against the pre-iteration checkout on 2026-10-13 produced:
 
@@ -53,10 +53,10 @@ A seeded comparison against the pre-iteration checkout on 2026-10-13 produced:
 | Renderer-reported geometry allocations | 495 | 123 |
 | Unique source texture pixels | 22,912,812 | 15,774,232 |
 
-These are one representative outdoor view, not worst-case or device FPS measurements. The new interior views exercised by the tour used approximately 43–69 draw calls depending on room and viewport. Dialogue and artifact discovery were tested separately from rendering-work measurement.
+These historical figures used automatic per-render resets and excluded shadow-pass calls; they do not establish compliance with the new whole-frame 400-call limit. They are not worst-case or device FPS measurements. The new interior views exercised by the tour used approximately 43–69 draw calls depending on room and viewport. Dialogue and artifact discovery were tested separately from rendering-work measurement.
 
 ## Validation
 
 `npm test` runs both the existing control/profile suite and the urban suite in desktop and mobile-emulated Chromium. It exercises speed tiers, keyboard and multi-touch, reachable navigation, collision, entry/return, lighting changes, five exhibit actions, dialogue continuation, speaker pausing and the original art gallery. Runtime and shader errors fail the tests. Screenshots include both interiors on desktop and mobile.
 
-The environment's Chromium lacks its HTTPS proxy CA. The documented fixture mode uses the exact r128 CDN file downloaded with normal TLS verification and omits optional web fonts; external browser connectivity is therefore outside this test result. No TLS verification or trust-store settings are changed.
+The application now serves its pinned Three.js library from the same origin. Tests omit optional external web fonts; no CDN library substitution or TLS override is needed.

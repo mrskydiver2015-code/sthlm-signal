@@ -1,6 +1,16 @@
 {
   "name": "sthlm-signal",
   "private": true,
-  "scripts": { "test": "node tests/smoke.cjs && node tests/urban.cjs", "test:budget": "node tests/render-budget.cjs" },
-  "devDependencies": { "playwright": "1.62.1" }
+  "scripts": {
+    "test": "node tests/material-groups.cjs && node tests/input-manager.cjs && node tests/render-budget.cjs && node tests/smoke.cjs && node tests/urban.cjs",
+    "test:budget": "node tests/render-budget.cjs",
+    "test:input": "node tests/input-manager.cjs",
+    "vendor:three": "node scripts/vendor-three.cjs"
+  },
+  "devDependencies": {
+    "playwright": "1.62.1"
+  },
+  "dependencies": {
+    "three": "0.128.0"
+  }
 }

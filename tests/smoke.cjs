@@ -4,11 +4,10 @@ const http = require('node:http');
 const path = require('node:path');
 const { chromium } = require('playwright');
 
-// Test the real static app. THREE_JS_FIXTURE optionally supplies the exact r128 CDN
-// asset, previously downloaded with verified TLS, for environments with browser CA issues.
+// Test the real static app using its same-origin, pinned Three.js asset.
 const root = path.resolve(__dirname, '..');
 const server = http.createServer(async (req, res) => {
-  const file = { '/': 'index.html', '/config.js': 'config.js', '/urban.js':'urban.js' }[req.url];
+  const file = { '/': 'index.html', '/input-manager.js':'input-manager.js', '/vendor/three.min.js':'vendor/three.min.js', '/config.js': 'config.js', '/urban.js':'urban.js' }[req.url];
   if (!file) { res.writeHead(404); res.end(); return; }
   res.setHeader('Content-Type', file.endsWith('.js') ? 'application/javascript' : 'text/html; charset=utf-8');
   res.end(await fs.readFile(path.join(root, file)));
@@ -20,13 +19,7 @@ async function pageFor(options = {}, legacy = false) {
   const page = await context.newPage();
   page.on('pageerror', error => errors.push(error.message));
   page.on('console', message => { if(message.type()==='error' && /THREE|WebGL|shader/i.test(message.text())) errors.push(message.text()); });
-  if (process.env.THREE_JS_FIXTURE) {
-    await page.route('https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js', route => route.fulfill({
-      path: process.env.THREE_JS_FIXTURE, contentType: 'application/javascript',
-    }));
-    // Optional typography is outside the offline functional check.
-    await page.route('https://fonts.googleapis.com/**', route => route.fulfill({ body: '', contentType: 'text/css' }));
-  }
+  await page.route('https://fonts.googleapis.com/**', route => route.fulfill({body:'',contentType:'text/css'}));
   if (legacy) await page.route('**/config.js', route => route.fulfill({
     body: 'window.STHLM_CONFIG={externalAuthEnabled:true};', contentType: 'application/javascript',
   }));
@@ -80,6 +73,7 @@ async function graphics(page, mobile) {
     };
   });
   assert(result.aces && result.shadows && result.environment && !result.contextLost);
+  assert(result.calls<=400, 'Whole-frame draw call budget at spawn: '+result.calls);
   assert(result.casters > 0 && result.receivers > 0 && result.triangles > 1000);
   assert.equal(result.obsolete, 0);
   assert.equal(result.shadowSize, mobile ? 512 : 1024);

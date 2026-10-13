@@ -5,7 +5,7 @@ const path=require('node:path');
 const {chromium}=require('playwright');
 const root=path.resolve(__dirname,'..');
 const server=http.createServer(async(req,res)=>{
-  const files={'/':'index.html','/config.js':'config.js','/urban.js':'urban.js'};
+  const files={'/':'index.html','/input-manager.js':'input-manager.js', '/vendor/three.min.js':'vendor/three.min.js', '/config.js':'config.js','/urban.js':'urban.js'};
   if(!files[req.url]){res.writeHead(404);res.end();return;}
   res.setHeader('Content-Type',req.url.endsWith('.js')?'application/javascript':'text/html; charset=utf-8');
   res.end(await fs.readFile(path.join(root,files[req.url])));
@@ -17,10 +17,7 @@ async function openPage(mobile){
   const context=await browser.newContext(mobile?{viewport:{width:390,height:844},isMobile:true,hasTouch:true,deviceScaleFactor:2}:{viewport:{width:1000,height:700}});
   const p=await context.newPage();p.on('pageerror',e=>errors.push(e.message));
   p.on('console',m=>{if(m.type()==='error'&&/WebGL|THREE|shader/i.test(m.text()))errors.push(m.text());});
-  if(process.env.THREE_JS_FIXTURE){
-    await p.route('https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js',r=>r.fulfill({path:process.env.THREE_JS_FIXTURE,contentType:'application/javascript'}));
-    await p.route('https://fonts.googleapis.com/**',r=>r.fulfill({body:'',contentType:'text/css'}));
-  }
+  await p.route('https://fonts.googleapis.com/**',r=>r.fulfill({body:'',contentType:'text/css'}));
   await p.goto(`http://127.0.0.1:${server.address().port}/`);
   await p.locator('#skipBtn').click();await p.locator('#devUsername').fill('Kvällsvandrare');await p.locator('#devUsername').press('Enter');
   await p.waitForFunction(()=>state.playing);await frames(p);

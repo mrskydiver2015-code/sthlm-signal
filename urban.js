@@ -257,6 +257,29 @@ function markBoundaries(){
     const sign=makeSign('KVÄLLENS KVARTER · VÄND HÄR','#1d2a3a','#d7c493',4);sign.position.set(x,1.6,z);world.add(sign);
   }
 }
+// Combine disjoint index ranges using the same material without changing triangles,
+// UVs, normals, or shadow behavior. Box faces otherwise cost six submissions.
+function compactMaterialGroups(mesh){
+  if(!mesh.isMesh || !Array.isArray(mesh.material) || !mesh.geometry.index) return;
+  const geometry=mesh.geometry, groups=new Map();
+  for(const group of geometry.groups){
+    const material=mesh.material[group.materialIndex];
+    if(!groups.has(material)) groups.set(material,[]);
+    const indices=groups.get(material);
+    for(let i=group.start;i<group.start+group.count;i++) indices.push(geometry.index.getX(i));
+  }
+  if(groups.size===geometry.groups.length) return;
+  // Own the reordered geometry; never mutate another mesh's shared index buffer.
+  const compact=geometry.clone(), indices=[], materials=[];
+  compact.clearGroups();
+  for(const [material,part] of groups){
+    compact.addGroup(indices.length,part.length,materials.length);
+    indices.push(...part);materials.push(material);
+  }
+  compact.setIndex(indices);mesh.geometry=compact;mesh.material=materials;
+  // Building geometries are owned by their mesh.
+  geometry.dispose();
+}
 function batchStaticScene(root){
   root.updateMatrixWorld(true);
   const groups=new Map(), inverse=new THREE.Matrix4().copy(root.matrixWorld).invert();
@@ -268,7 +291,7 @@ function batchStaticScene(root){
     if(!groups.has(key)) groups.set(key,[]);groups.get(key).push(mesh);
   });
   for(const meshes of groups.values()){
-    if(meshes.length<3) continue;
+    if(meshes.length<2) continue;
     const first=meshes[0],batch=new THREE.InstancedMesh(first.geometry,first.material,meshes.length);
     batch.castShadow=first.castShadow;batch.receiveShadow=true;batch.frustumCulled=false;
     const bounds=new THREE.Box3();

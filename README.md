@@ -2,13 +2,13 @@
 
 En fristående Three.js-prototyp av Stockholm. Appen körs direkt från statiska filer, utan backend eller byggsteg.
 
-## Starta lokalt
+## Förhandsvisa i molnmiljön
 
 ```sh
 python3 -m http.server 8000 --bind 127.0.0.1
 ```
 
-Öppna sidan i en WebGL-kompatibel webbläsare. Three.js r128 hämtas från `cdnjs.cloudflare.com`; de valfria typsnitten använder `fonts.googleapis.com` och `fonts.gstatic.com`.
+Öppna sidan i en WebGL-kompatibel webbläsare. Three.js r128 serveras från den incheckade `vendor/three.min.js`; de valfria typsnitten använder `fonts.googleapis.com` och `fonts.gstatic.com`.
 
 ## Styrning
 
@@ -54,15 +54,17 @@ npm test
 
 Testerna startar en egen lokal server och täcker kamerarelativ WASD/pilstyrning i fyra riktningar, fokusförlust, musdragning, lokal inloggning/omladdning, HTML-säker visning av namn, mobilens multitouch/avbrott/rotation, grafikinställningar och leverantörsflaggan. Stadstesterna verifierar 1×/2×/4×, dubbeltryck W, mobil joystick vid 4×, kollisionskartans tillgänglighet, båda entréer/utgångar, samtliga montrar och dialoger. Skärmbilder skrivs till ignorerade `test-results/`.
 
-För befintlig Chromium: `BROWSER_PATH=/usr/bin/chromium npm test`. I miljöer där Chromium saknar proxycertifikatet kan samma CDN-fil hämtas separat med verifierad TLS och användas som testfixture:
+För befintlig Chromium: `BROWSER_PATH=/usr/bin/chromium npm test`.
+Kör byggning och tester i molnmiljön; Windows-kopian är ett passivt arkiv.
 
-```sh
-curl --fail --show-error --location \
-  https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js \
-  -o /tmp/sthlm-three-r128.min.js
-BROWSER_PATH=/usr/bin/chromium THREE_JS_FIXTURE=/tmp/sthlm-three-r128.min.js npm test
-```
+### Arkitekturregressioner
 
-Fixtureläget ersätter bara Three.js-svaret i testwebbläsaren och utelämnar valfria webbtypsnitt. Det verifierar appens beteende, inte webbläsarens externa CDN-/typsnittsanslutning. TLS-verifiering stängs aldrig av.
+- `npm run test:input` jämför tangentbord och riktiga emulerade touchhändelser mot kamerans faktiska framåt-/högerriktning vid 0°, 90°, 180° och 270°. Motstående tangenter, diagonal hastighet, fokusförlust och touch-avbrott kontrolleras också.
+- `npm run test:budget` kör den riktiga renderingsloopen med slumpfrö 1842 och fast tidssteg 1/60 s. Scenen står vid (0, 0, 30), yaw 0 och pitch 0,28, i desktop- och mobilprofil; desktop kontrolleras också vid startplatsen (0, 0, -14). Alla 12 uppvärmningsbilder och 60 efterföljande bilder måste hålla högst 400 draw calls.
+- `renderer.info.autoReset = false` och en återställning i början av varje applikationsbild gör att skuggpasset ingår. Saknad rendering, överskriden gräns samt runtime-/shaderfel underkänner testet.
+- `npm test` inkluderar dessa tester och befintliga smoke-/stadstester. GitHub Actions kör samma svit vid push och pull request och sparar testunderlag.
+- Rapporten `test-results/render-budget.json` innehåller mätvärden, miljö, scenparametrar och revision. Resursantal är inte uppmätt GPU-minne. En representativ vy är inte full täckning av alla scener och övergångar.
+- `input-manager.js` äger gemensam rörelseinput. DOM-adaptrarna ligger kvar i `index.html`; kamerans världskoordinater beräknas i rörelsekontrollern.
+- Three.js är låst till npm-version 0.128.0. Efter en avsiktlig versionsuppdatering körs `npm run vendor:three` och både lockfil, bibliotek och licens checkas in. Testerna kontrollerar att den lokala bibliotekskopian matchar paketet.
 
-Mät renderingsarbete med `npm run test:budget` (samma browser-/fixturevariabler stöds). `STHLM_BASELINE=/sökväg/tidigare-index.html` aktiverar en jämförelse med en tidigare version. Resultatet sparas i `test-results/render-budget.json`. `sthlmDiagnostics()` i webbläsarkonsolen visar aktuellt område, hastighet, draw calls, geometrier och senaste bildtider. Mätning i mjukvarurenderad Chromium är inte ett FPS-resultat för telefoner.
+`sthlmDiagnostics()` visar nu hela bildrutans draw calls. Faktisk FPS, frame pacing och fysisk touchkänsla måste verifieras på målmaskiner mot den publicerade versionen.

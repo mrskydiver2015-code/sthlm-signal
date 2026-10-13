@@ -1,34 +1,61 @@
-// Repeatable rendering-work comparison. Timings from software WebGL are NOT phone FPS.
-const {chromium}=require('playwright');
-const http=require('node:http'),fs=require('node:fs/promises'),path=require('node:path');
-const root=path.resolve(__dirname,'..');
-const server=http.createServer(async(req,res)=>{
-  const target=req.url==='/baseline'?process.env.STHLM_BASELINE:{'/':path.join(root,'index.html'),'/config.js':path.join(root,'config.js'),'/urban.js':path.join(root,'urban.js')}[req.url];
-  if(!target){res.writeHead(404);res.end();return;}
-  res.setHeader('Content-Type',req.url.endsWith('.js')?'application/javascript':'text/html; charset=utf-8');res.end(await fs.readFile(target));
-});
+// Whole-frame rendering work, including shadows. Software WebGL is not device FPS.
+const assert=require('node:assert/strict');
+const fs=require('node:fs/promises');
+const path=require('node:path');
+const {execFileSync}=require('node:child_process');
+const {harness,root}=require('./deterministic.cjs');
+const LIMIT=400, WARMUP=12, SAMPLES=60;
+function assertBudget(calls,label){
+  assert(Number.isInteger(calls)&&calls>0,label+': missing/invalid rendering statistics');
+  assert(calls<=LIMIT,label+': '+calls+' draw calls exceeds '+LIMIT);
+}
 (async()=>{
- await new Promise(r=>server.listen(0,'127.0.0.1',r));
- const browser=await chromium.launch({...(process.env.BROWSER_PATH?{executablePath:process.env.BROWSER_PATH}:{}),args:['--no-sandbox','--use-angle=swiftshader','--enable-unsafe-swiftshader']});
- try{
- const reports=[];
- for(const variant of process.env.STHLM_BASELINE?['baseline','candidate']:['candidate']){
-  const page=await browser.newPage({viewport:{width:800,height:600}});
-  await page.addInitScript(()=>{let seed=1842;Math.random=()=>{seed=(1664525*seed+1013904223)>>>0;return seed/4294967296;};});
-  const errors=[];page.on('pageerror',e=>errors.push(e.message));
-  if(process.env.THREE_JS_FIXTURE){await page.route('https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js',r=>r.fulfill({path:process.env.THREE_JS_FIXTURE,contentType:'application/javascript'}));await page.route('https://fonts.googleapis.com/**',r=>r.fulfill({body:'',contentType:'text/css'}));}
-  await page.goto(`http://127.0.0.1:${server.address().port}/${variant==='baseline'?'baseline':''}`);
-  await page.evaluate(()=>{state.intro=false;state.profile=defaultProfile();state.profile.name='Budget';closePanel();enterCity();player.group.position.set(0,0,30);cam.yaw=0;cam.pitch=.28;});
-  const frame=await page.evaluate(()=>renderer.info.render.frame);await page.waitForFunction(f=>renderer.info.render.frame>f,frame+20);
-  reports.push({variant,...await page.evaluate(()=>{
-   const textures=new Set();scene.traverse(o=>{for(const m of [].concat(o.material||[]))for(const field of ['map','emissiveMap','bumpMap'])if(m[field])textures.add(m[field]);});
-   const texels=[...textures].reduce((sum,t)=>sum+(t.image?.width||0)*(t.image?.height||0),0);
-   return {draws:renderer.info.render.calls,triangles:renderer.info.render.triangles,geometryAllocations:renderer.info.memory.geometries,sourceTextureTexels:texels,webglRenderer:renderer.getContext().getParameter(renderer.getContext().RENDERER)};
-  }),errors});
-  await page.close();
- }
- await fs.mkdir(path.join(root,'test-results'),{recursive:true});
- await fs.writeFile(path.join(root,'test-results/render-budget.json'),JSON.stringify(reports,null,2));
- console.log(JSON.stringify(reports,null,2));if(reports.some(r=>r.errors.length))process.exitCode=1;
- }finally{await browser.close();server.close();}
-})().catch(e=>{console.error(e);server.close();process.exitCode=1;});
+  const h=await harness();
+  const reports=[];
+  try{
+    for(const profile of [
+      {name:'desktop-street',position:[0,0,30],options:{viewport:{width:800,height:600}}},
+      {name:'desktop-spawn',position:[0,0,-14],options:{viewport:{width:800,height:600}}},
+      {name:'mobile-street',position:[0,0,30],options:{viewport:{width:390,height:844},isMobile:true,hasTouch:true,deviceScaleFactor:2}}
+    ]){
+      const page=await h.page(profile.options);
+      const result=await page.evaluate(({warmup,samples,position})=>{
+        player.group.position.fromArray(position);cam.yaw=0;cam.pitch=.28;snapCamera();
+        renderer.info.autoReset=false;
+        const calls=[],triangles=[];
+        for(let i=0;i<warmup+samples;i++){
+          tick(); // The unchanged production loop includes every render pass.
+          calls.push(renderer.info.render.calls);
+          triangles.push(renderer.info.render.triangles);
+          if(renderer.info.autoReset!==false)throw Error('Frame statistics auto-reset unexpectedly');
+          if(renderer.getContext().isContextLost())throw Error('WebGL context lost');
+        }
+        const gl=renderer.getContext(), debug=gl.getExtension('WEBGL_debug_renderer_info');
+        return {calls,triangles,geometryCount:renderer.info.memory.geometries,
+          textureCount:renderer.info.memory.textures,threeRevision:THREE.REVISION,
+          backend:'WebGL',renderer:debug?gl.getParameter(debug.UNMASKED_RENDERER_WEBGL):gl.getParameter(gl.RENDERER),
+          viewport:{width:innerWidth,height:innerHeight},dpr:renderer.getPixelRatio(),
+          shadows:renderer.shadowMap.enabled,shadowMapSize:moon.shadow.mapSize.x,
+          seed:1842,stepSeconds:1/60,position,yaw:0,pitch:.28};
+      },{warmup:WARMUP,samples:SAMPLES,position:profile.position});
+      reports.push({profile:profile.name,...result,peak:Math.max(...result.calls)});
+      await fs.mkdir(path.join(root,'test-results'),{recursive:true});
+      await page.context().close();
+    }
+    const report={revision:execFileSync('git',['rev-parse','HEAD'],{cwd:root,encoding:'utf8'}).trim(),
+      dirty:!!execFileSync('git',['status','--porcelain'],{cwd:root,encoding:'utf8'}).trim(),
+      browser:h.browser.version(),limit:LIMIT,warmupFrames:WARMUP,sampleFrames:SAMPLES,
+      note:'Warm-up frames are also gated. Representative street and desktop spawn views; not exhaustive coverage or device FPS.',
+      reports,errors:h.errors};
+    await fs.mkdir(path.join(root,'test-results'),{recursive:true});
+    await fs.writeFile(path.join(root,'test-results/render-budget.json'),JSON.stringify(report,null,2));
+    for(const result of reports){
+      console.log(result.profile+': peak '+result.peak+' / '+LIMIT+' whole-frame draw calls ('+result.renderer+')');
+      assert.equal(result.shadows,true,'Do not disable shadows to pass the budget');
+      assert.equal(result.calls.length,WARMUP+SAMPLES);
+      result.calls.forEach((calls,i)=>assertBudget(calls,result.profile+' frame '+i));
+    }
+    assert.deepEqual(h.errors,[]);
+    console.log('PASS deterministic rendering budget, including shadow passes.');
+  }finally{await h.close();}
+})().catch(error=>{console.error(error);process.exitCode=1;});
